@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>QR Generator — Single & Bulk Excel</title>
-<meta name="description" content="Generator QR code data mentah (non-link), single & bulk dari Excel. 100% berjalan di browser.">
+<meta name="description" content="Generator QR code ke link tujuan, single & bulk dari Excel. 100% berjalan di browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1f3a'/%3E%3Cpath fill='%23f2c12e' d='M7 7h7v7H7zM18 7h7v7h-7zM7 18h7v7H7zM18 18h3v3h-3zM22 22h3v3h-3zM18 23h3v2h-3zM23 18h2v3h-2z'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,7 +302,7 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
     <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0f1f3a"/><path fill="#f2c12e" d="M7 7h7v7H7zM18 7h7v7h-7zM7 18h7v7H7zM18 18h3v3h-3zM22 22h3v3h-3zM18 23h3v2h-3zM23 18h2v3h-2z"/><path fill="#0f1f3a" d="M9 9h3v3H9zM20 9h3v3h-3zM9 20h3v3H9z"/></svg>
     <div>
       <h1>QR Generator</h1>
-      <p>QR berisi data mentah untuk kartu, presensi, tiket, dan label aset</p>
+      <p>QR langsung ke link tujuan, satuan atau massal dari Excel</p>
     </div>
   </div>
   <div class="seg" role="group" aria-label="Tema tampilan">
@@ -314,7 +314,7 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
 
 <div class="privacy">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-  <div><b>Data Anda tidak meninggalkan perangkat ini.</b> Membaca Excel, membuat QR, dan mengemas ZIP semuanya berjalan di browser. Tidak ada NIM, nama, atau data lain yang dikirim ke server mana pun. Riwayat dan analitik disimpan di penyimpanan lokal browser ini.</div>
+  <div><b>Data Anda tidak meninggalkan perangkat ini.</b> Membaca Excel, membuat QR, dan mengemas ZIP semuanya berjalan di browser. Tidak ada NIM, nama, atau link yang dikirim ke server mana pun, dan QR tidak memakai link redirect. Riwayat dan analitik disimpan di penyimpanan lokal browser ini.</div>
 </div>
 <div id="libError" class="alert err" hidden></div>
 
@@ -329,13 +329,13 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
 <section class="panel" id="tab-single" role="tabpanel">
   <div class="grid-2">
     <div class="card">
-      <div class="card-h"><h2>Isi QR</h2><span class="hint">Teks, ID, atau kode — bukan link</span></div>
-      <label class="fld"><span>Data yang di-encode</span>
-        <textarea id="sText" class="in mono" rows="3" spellcheck="false">SKALA-STEKOM-0001</textarea></label>
+      <div class="card-h"><h2>Link tujuan</h2><span class="hint">QR langsung membuka link ini</span></div>
+      <label class="fld"><span>URL tujuan</span>
+        <textarea id="sText" class="in mono" rows="3" spellcheck="false" placeholder="https://…">https://skala.stekom.ac.id</textarea></label>
       <div class="meta-line" id="sInfo"></div>
-      <div id="sLinkWarn" class="alert warn" hidden>Terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link, tetapi QR tetap bisa dibuat.</div>
+      <div id="sUrlWarn" class="alert warn" hidden><span id="sUrlMsg"></span> <button class="btn ghost sm" id="sFixUrl" data-track="Single: Tambahkan https://" hidden>Tambahkan https://</button></div>
       <div class="fields">
-        <label class="fld"><span>Label di bawah QR</span><input id="sLabel" class="in" placeholder="Opsional, mis. Budi Santoso"></label>
+        <label class="fld"><span>Label di bawah QR</span><input id="sLabel" class="in" placeholder="Opsional, mis. Website Kampus"></label>
         <label class="fld"><span>Kategori</span><input id="sCat" class="in" list="catList" placeholder="Opsional, mis. Mahasiswa"></label>
       </div>
       <div class="fields">
@@ -362,8 +362,9 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
         <button class="btn tape" id="sPng" data-track="Single: Unduh PNG"><span data-ic="dl"></span>Unduh PNG</button>
         <button class="btn ghost" id="sSvg" data-track="Single: Unduh SVG"><span data-ic="dl"></span>Unduh SVG</button>
         <button class="btn ghost" id="sCopy" data-track="Single: Salin gambar"><span data-ic="copy"></span>Salin gambar</button>
+        <a class="btn ghost" id="sOpen" target="_blank" rel="noopener" data-link data-track="Single: Buka link"><span data-ic="open"></span>Buka link</a>
       </div>
-      <p class="hint c">Pratinjau diperbarui otomatis. Setiap unduhan tercatat di Riwayat.</p>
+      <p class="hint c">Pratinjau diperbarui otomatis. Coba "Buka link" untuk memastikan tujuan benar sebelum dicetak.</p>
     </div>
   </div>
   <datalist id="catList"></datalist>
@@ -410,10 +411,10 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
         <label class="fld"><span>Sumber isi QR</span>
           <select id="qrSource" class="in">
             <option value="column">Kolom Data_QR (kosong → ID)</option>
-            <option value="pattern">Rakit dari pola placeholder</option>
+            <option value="pattern">Rakit link dari pola placeholder</option>
           </select></label>
         <label class="fld" id="qrPatternFld"><span>Pola isi QR</span>
-          <input id="qrPattern" class="in mono" placeholder="{ID}|{Kategori}" spellcheck="false"></label>
+          <input id="qrPattern" class="in mono" placeholder="https://domain.ac.id/profil/{ID}" spellcheck="false"></label>
       </div>
       <label class="fld"><span>Pola nama file output</span>
         <input id="fnPattern" class="in mono" value="{ID}_{Nama}" spellcheck="false"></label>
@@ -525,7 +526,7 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
     <button class="btn ghost sm" id="aExport" data-track="Analitik: Ekspor CSV"><span data-ic="dl"></span>Ekspor data klik</button>
     <button class="btn danger sm" id="aReset" data-track="Analitik: Reset">Reset analitik</button>
   </div>
-  <div class="alert info">QR di sini berisi data mentah, bukan link, sehingga pemindaian di lapangan tidak bisa dilacak. Analitik mencatat aktivitas di aplikasi ini: klik tombol, QR yang dibuat, unduhan, dan pembukaan ulang riwayat.</div>
+  <div class="alert info">QR langsung menuju link tujuan tanpa link redirect, jadi pemindaian di lapangan tidak tercatat di sini. Analitik mencatat aktivitas di aplikasi ini: klik tombol, klik "Buka link", QR yang dibuat, unduhan, dan pembukaan ulang riwayat.</div>
   <div class="kpis" id="aKpis"></div>
   <div class="card chart"><div class="card-h"><h2>Aktivitas harian</h2></div><div id="aDaily"></div>
     <div class="legend"><span><i style="background:var(--ink)"></i>QR dibuat</span><span><i style="background:var(--tape)"></i>Klik</span></div></div>
@@ -534,7 +535,7 @@ ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
     <div class="card"><div class="card-h"><h2>Riwayat paling sering dibuka</h2></div><div id="aTopHist"></div></div>
     <div class="card"><div class="card-h"><h2>QR per kategori</h2></div><div id="aCats"></div></div>
     <div class="card"><div class="card-h"><h2>Mode & format unduhan</h2></div><div id="aModes"></div></div>
-    <div class="card chart"><div class="card-h"><h2>Jam paling aktif</h2></div><div id="aHours"></div></div>
+    <div class="card"><div class="card-h"><h2>Domain tujuan</h2><span class="hint">QR dibuat / link dibuka</span></div><div id="aDoms"></div></div>
     <div class="card"><div class="card-h"><h2>Aktivitas terbaru</h2></div><ul class="log" id="aLog"></ul></div>
   </div>
 </section>
@@ -659,6 +660,8 @@ function track(type,extra){
   evTimer=setTimeout(()=>{store.set('events',events);if(currentTab==='analytics')renderAnalytics();},250);
 }
 document.addEventListener('click',e=>{
+  const a=e.target.closest('a[data-link][href]');
+  if(a)track('link_open',{dom:domainOf(a.href),url:a.href});
   const el=e.target.closest('[data-track]');
   if(el && !el.disabled) track('click',{label:el.dataset.track});
 },true);
@@ -721,7 +724,13 @@ function canvasBlob(cv){return new Promise(res=>cv.toBlob(b=>res(b),'image/png')
 function sanitizeName(s){
   return String(s||'').normalize('NFC').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^[_.\-]+|[_.\-]+$/g,'').slice(0,120);
 }
-const isLink=s=>/https?:\/\//i.test(s);
+function urlKind(s){
+  s=String(s||'').trim();
+  if(/^https?:\/\/[^\s/?#]+[^\s]*$/i.test(s))return 'url';
+  if(/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?([/?#]\S*)?$/i.test(s))return 'domain';
+  return 'text';
+}
+function domainOf(s){try{return new URL(s).hostname.replace(/^www\./,'');}catch(e){return '';}}
 
 /* ---------------- Theme & tabs ---------------- */
 function applyTheme(p){
@@ -751,7 +760,11 @@ function singleData(){
 function sigOf(d){return JSON.stringify([d.content,d.label,d.cat,d.opts]);}
 function renderSingle(){
   const d=singleData();const info=$('#sInfo');
-  $('#sLinkWarn').hidden=!isLink(d.content);
+  const uk=urlKind(d.content);
+  $('#sUrlWarn').hidden=!d.content||uk==='url';
+  $('#sFixUrl').hidden=uk!=='domain';
+  $('#sUrlMsg').textContent=uk==='domain'?'Link belum diawali https://. Sebagian aplikasi pemindai tidak mengenalinya sebagai link.':'Isi ini bukan link, jadi pemindai akan menampilkannya sebagai teks biasa.';
+  const op=$('#sOpen');if(uk==='url'){op.href=d.content;op.hidden=false;}else{op.removeAttribute('href');op.hidden=true;}
   if(!d.content){$('#sSticker').hidden=true;$('#sEmpty').hidden=false;info.innerHTML='';setSingleState('empty');singleLast=null;return;}
   const b=buildQR(d.content,d.opts.ecl);
   if(!b){$('#sSticker').hidden=true;$('#sEmpty').hidden=false;$('#sEmpty').textContent='Data terlalu panjang untuk QR (maks 2.953 byte).';
@@ -762,7 +775,8 @@ function renderSingle(){
   drawQR($('#sCanvas'),b.q,o);
   singleLast={q:b.q,o,level:b.level,d};
   const ver=(b.q.getModuleCount()-17)/4;
-  info.innerHTML='<span class="pill">'+fmtN(bytesLen(d.content))+' byte</span><span class="pill">Versi '+ver+'</span><span class="pill'+(b.level!==d.opts.ecl?' warn':'')+'">Level '+b.level+'</span>'+
+  const dom=domainOf(d.content);
+  info.innerHTML=(dom?'<span class="pill ok">'+esc(dom)+'</span>':'')+'<span class="pill">'+fmtN(bytesLen(d.content))+' byte</span><span class="pill">Versi '+ver+'</span><span class="pill'+(b.level!==d.opts.ecl?' warn':'')+'">Level '+b.level+'</span>'+
     (b.level!==d.opts.ecl?'<span class="pill warn">Level turun dari '+d.opts.ecl+' karena data panjang</span>':'');
   if(sigOf(d)!==singleSig)singleSavedId=null;
   setSingleState(singleSavedId?'saved':'draft');
@@ -781,7 +795,7 @@ function saveSingle(){
   const d=singleLast.d;
   const e={id:uid(),type:'single',t:Date.now(),content:d.content,label:d.label,cat:d.cat,opts:d.opts,level:singleLast.level,clicks:0,downloads:0};
   addHistory(e);singleSavedId=e.id;singleSig=sigOf(d);
-  track('generate',{mode:'single',n:1,cat:d.cat||''});
+  track('generate',{mode:'single',n:1,cat:d.cat||'',dom:domainOf(d.content)});
   setSingleState('saved');
   return e;
 }
@@ -822,7 +836,7 @@ const ROLE={
   id:{label:'ID',desc:'ID unik. Dipakai untuk nama file; menjadi isi QR bila Data_QR kosong.',core:true},
   nama:{label:'Nama',desc:'Label tambahan; tampil di preview dan bisa dicetak di bawah QR.'},
   kategori:{label:'Kategori',desc:'Pengelompokan, mis. Mahasiswa, Aset, Ruangan.'},
-  data:{label:'Data_QR',desc:'Isi persis yang di-encode ke QR. Jika kosong, memakai ID.',core:true},
+  data:{label:'Data_QR',desc:'Link tujuan lengkap (https://…) yang di-encode ke QR. Jika kosong, memakai ID.',core:true},
   catatan:{label:'Catatan',desc:'Info tambahan; tidak ikut di-encode, hanya tampil di preview.'},
   custom:{label:'Kustom',desc:'Kolom tambahan; bisa dipakai sebagai placeholder di pola.'}
 };
@@ -837,12 +851,12 @@ const ALIAS={
 function mk(header,role,required,example){return{key:role==='custom'?'c_'+uid():role,header,role,required:!!required,example:example||''};}
 function pakemCols(o){o=o||{};return[
   mk('No','no',false,'1'),mk('ID','id',true,o.id||'MHS-2024001'),mk('Nama','nama',false,o.nama||'Budi Santoso'),
-  mk('Kategori','kategori',false,o.kat||'Mahasiswa'),mk('Data_QR','data',true,o.data||''),mk('Catatan','catatan',false,o.cat||'')];}
+  mk('Kategori','kategori',false,o.kat||'Mahasiswa'),mk('Data_QR','data',true,o.data==null?'':o.data),mk('Catatan','catatan',false,o.cat||'')];}
 const PRESETS={
-  standar:()=>({preset:'standar',cols:pakemCols({data:'MHS-2024001|TI|2024',cat:'Kartu baru'}),source:'column',pattern:'{ID}|{Kategori}',fname:'{ID}_{Nama}'}),
-  presensi:()=>({preset:'presensi',cols:[...pakemCols({data:'',cat:'Semester ganjil'}),mk('Prodi','custom',true,'Teknik Informatika'),mk('Angkatan','custom',false,'2024')],source:'pattern',pattern:'{ID}|{Prodi}|{Angkatan}',fname:'{ID}_{Nama}'}),
-  aset:()=>({preset:'aset',cols:[...pakemCols({id:'AST-0001',nama:'Proyektor Epson',kat:'Aset',data:''}),mk('Lokasi','custom',true,'Ruang B-201'),mk('Tahun_Perolehan','custom',false,'2023')],source:'pattern',pattern:'AST:{ID};LOK:{Lokasi}',fname:'{Kategori}_{ID}'}),
-  tiket:()=>({preset:'tiket',cols:[...pakemCols({id:'TKT-0001',nama:'Siti Aminah',kat:'Reguler',data:''}),mk('Acara','custom',true,'Seminar Nasional'),mk('Kursi','custom',false,'A-12')],source:'pattern',pattern:'TKT|{ID}|{Acara}|{Kursi}',fname:'{ID}_{Kursi}'})
+  standar:()=>({preset:'standar',cols:pakemCols({data:'https://skala.stekom.ac.id/profil/MHS-2024001',cat:'Kartu baru'}),source:'column',pattern:'https://skala.stekom.ac.id/profil/{ID}',fname:'{ID}_{Nama}'}),
+  presensi:()=>({preset:'presensi',cols:[...pakemCols({data:'',cat:'Semester ganjil'}),mk('Prodi','custom',true,'Teknik Informatika'),mk('Angkatan','custom',false,'2024')],source:'pattern',pattern:'https://skala.stekom.ac.id/presensi?nim={ID}&prodi={Prodi}',fname:'{ID}_{Nama}'}),
+  aset:()=>({preset:'aset',cols:[...pakemCols({id:'AST-0001',nama:'Proyektor Epson',kat:'Aset',data:''}),mk('Lokasi','custom',true,'Ruang B-201'),mk('Tahun_Perolehan','custom',false,'2023')],source:'pattern',pattern:'https://skala.stekom.ac.id/aset/{ID}',fname:'{Kategori}_{ID}'}),
+  tiket:()=>({preset:'tiket',cols:[...pakemCols({id:'TKT-0001',nama:'Siti Aminah',kat:'Reguler',data:''}),mk('Acara','custom',true,'Seminar Nasional'),mk('Kursi','custom',false,'A-12')],source:'pattern',pattern:'https://skala.stekom.ac.id/tiket/{ID}',fname:'{ID}_{Kursi}'})
 };
 let schema=store.get('schema',null);
 if(!schema||!Array.isArray(schema.cols)||!schema.cols.some(c=>c.role==='id'))schema=PRESETS.standar();
@@ -851,12 +865,12 @@ const roleKey=role=>{const c=schema.cols.find(c=>c.role===role);return c?c.key:n
 const hdrNorm=h=>String(h||'').toLowerCase().replace(/[\s_\-.]/g,'');
 function keyByHeader(name){const n=String(name).trim().toLowerCase();const c=schema.cols.find(c=>c.header.trim().toLowerCase()===n);return c?c.key:null;}
 function fillPattern(p,r){
-  let filled=false;
+  let filled=false;const asUrl=/^https?:\/\//i.test(String(p||'').trim());
   const text=String(p||'').replace(/\{([^{}]+)\}/g,(m,name)=>{
     const nm=name.trim();
-    if(nm==='#'){return String(r.n);}
+    if(nm==='#'){filled=true;return String(r.n);}
     const k=keyByHeader(nm);if(!k)return '';
-    const v=r.v[k]||'';if(v)filled=true;return v;
+    const v=r.v[k]||'';if(v)filled=true;return asUrl?encodeURIComponent(v):v;
   });
   return{text,filled};
 }
@@ -896,7 +910,7 @@ function checkSchema(){
   });
   const up=unknownPlaceholders(schema.source==='pattern'?schema.pattern:'').concat(unknownPlaceholders(schema.fname));
   if(up.length)msgs.push('Placeholder tidak dikenal: '+[...new Set(up)].join(', ')+' — akan dianggap kosong.');
-  if(schema.source==='pattern'&&!/\{[^{}]+\}/.test(schema.pattern||''))msgs.push('Pola isi QR belum berisi placeholder, sehingga semua QR akan berisi teks yang sama.');
+  if(schema.source==='pattern'&&!/\{[^{}]+\}/.test(schema.pattern||''))msgs.push('Pola link belum berisi placeholder, sehingga semua QR akan menuju link yang sama.');
   const el=$('#schemaMsg');el.hidden=!msgs.length;el.innerHTML=msgs.map(esc).join('<br>');
   $('#qrPattern').disabled=schema.source!=='pattern';
   $('#qrPatternFld').style.opacity=schema.source==='pattern'?1:.55;
@@ -923,7 +937,7 @@ function renderPatternExample(){
   const r=exampleRow(0);
   const content=computeContent(r).content||'(kosong)';
   const fn=(sanitizeName(fillPattern(schema.fname||'{ID}',r).text)||'baris_1')+'.png';
-  $('#patternExample').innerHTML='<div>Contoh isi QR baris pertama: <code>'+esc(content)+'</code></div><div>Contoh nama file: <code>'+esc(fn)+'</code></div>';
+  $('#patternExample').innerHTML='<div>Contoh link baris pertama: <code>'+esc(content)+'</code></div><div>Contoh nama file: <code>'+esc(fn)+'</code></div>';
 }
 function schemaChanged(opts){
   persistSchema();
@@ -952,7 +966,7 @@ function downloadTemplate(){
     ['Petunjuk pengisian template QR bulk'],[],
     ['Header di sheet "Data" harus sama persis dan urutannya tetap.'],
     ['Setiap baris menjadi satu QR. Baris yang ID dan Data_QR-nya kosong akan dilewati.'],
-    ['Isikan data mentah (teks/ID/kode), bukan link.'],[],
+    ['Isi Data_QR dengan link tujuan lengkap, diawali https://. QR langsung membuka link ini tanpa link redirect.'],[],
     ['Kolom','Peran','Wajib','Keterangan','Contoh']
   ];
   cols.forEach(c=>guide.push([c.header,ROLE[c.role].label,ROLE[c.role].core?'Inti (ID atau Data_QR minimal satu)':c.required?'Ya':'Tidak',ROLE[c.role].desc,c.example||'']));
@@ -1051,7 +1065,7 @@ function applyMapping(){
       if(c.key!==dataKey)val=val.replace(/[ \t]{2,}/g,' ');
       v[c.key]=val;
     });
-    return{n:b.row,v,link:null};
+    return{n:b.row,v};
   });
   pv.page=0;pv.filter='all';pv.q='';$('#pvSearch').value='';
   $$('.fchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='all')));
@@ -1082,12 +1096,9 @@ function validateAll(){
     else if(schema.source==='pattern'&&cc.src!=='pola')msgs.push({lv:'info',t:'Pola kosong, memakai '+cc.src});
     req.forEach(c=>{if(!(r.v[c.key]||''))msgs.push({lv:'err',t:'Kolom wajib "'+c.header+'" kosong'});});
     if(cc.id&&cnt.get(cc.id)>1)msgs.push({lv:'warn',t:'ID duplikat ('+cnt.get(cc.id)+'×)'});
-    if(cc.content&&isLink(cc.content)){
-      if(!r.link)r.link='pending';
-      if(r.link==='pending')msgs.push({lv:'warn',t:'Terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link. Lanjutkan?'});
-      else if(r.link==='allow')msgs.push({lv:'info',t:'Link diizinkan'});
-      else msgs.push({lv:'err',t:'Link dibatalkan — baris dilewati'});
-    }else r.link=null;
+    r.src=cc.src;r.uk=cc.content?urlKind(cc.content):'';
+    if(r.uk==='domain')msgs.push({lv:'warn',t:'Link belum diawali https://'});
+    else if(r.uk==='text')msgs.push({lv:'warn',t:'Bukan link — pemindai akan menampilkannya sebagai teks'});
     r.level=null;
     if(cc.content){
       const lv=planLevel(cc.content,ecl);
@@ -1102,10 +1113,10 @@ function validateAll(){
 function updateCounts(){
   const c={all:rows.length,ok:0,warn:0,err:0};rows.forEach(r=>c[r.status]++);
   ['all','ok','warn','err'].forEach(k=>$('#c-'+k).textContent=fmtN(c[k]));
-  const pend=rows.filter(r=>r.link==='pending').length;
-  const lb=$('#linkBar');lb.hidden=!pend;
-  if(pend)lb.innerHTML='<b>'+fmtN(pend)+' baris</b> terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link. Lanjutkan? '+
-    '<span class="btn-row" style="display:inline-flex;margin:6px 0 0"><button class="btn ghost sm" data-linkall="allow" data-track="Preview: Izinkan semua link">Lanjutkan semua</button><button class="btn ghost sm" data-linkall="skip" data-track="Preview: Lewati semua link">Batalkan semua</button></span>';
+  const fix=rows.filter(r=>r.uk==='domain'&&r.src==='Data_QR').length;
+  const lb=$('#linkBar');lb.hidden=!fix;
+  if(fix)lb.innerHTML='<b>'+fmtN(fix)+' baris</b> berisi link tanpa https://. '+
+    '<button class="btn ghost sm" data-fixall data-track="Preview: Tambahkan https:// semua" style="margin-left:6px">Tambahkan https:// ke semua</button>';
   const valid=c.all-c.err;
   $('#genAll').disabled=!valid;
   $('#genAll').textContent=valid?'Generate semua ('+fmtN(valid)+' QR)':'Generate semua';
@@ -1118,9 +1129,8 @@ function statusHtml(r){
   const lbl={ok:'OK',warn:'Warning',err:'Error'}[r.status];
   let h='<span class="pill '+r.status+'">'+lbl+'</span>';
   if(r.msgs.length)h+='<ul>'+r.msgs.map(m=>'<li class="'+m.lv+'">'+esc(m.t)+'</li>').join('')+'</ul>';
-  if(r.link==='pending')h+='<div class="lk"><button class="btn ghost sm" data-act="lallow" data-track="Preview: Izinkan link baris">Lanjut</button><button class="btn ghost sm" data-act="lskip" data-track="Preview: Batalkan link baris">Batal</button></div>';
-  else if(r.link==='allow')h+='<div class="lk"><button class="btn ghost sm" data-act="lskip">Batalkan link</button></div>';
-  else if(r.link==='skip')h+='<div class="lk"><button class="btn ghost sm" data-act="lallow">Izinkan link</button></div>';
+  if(r.uk==='url')h+='<div class="lk"><a class="btn ghost sm" href="'+esc(r.content)+'" target="_blank" rel="noopener" data-link data-track="Preview: Buka link">Buka link</a></div>';
+  else if(r.uk==='domain'&&r.src==='Data_QR')h+='<div class="lk"><button class="btn ghost sm" data-act="fixurl" data-track="Preview: Tambahkan https://">Tambahkan https://</button></div>';
   return h;
 }
 function renderPreview(){
@@ -1211,15 +1221,6 @@ async function generateAll(){
   if(running)return;
   if(!rows.length)return toast('Belum ada data untuk diproses','err');
   validateAll();
-  const pend=rows.filter(r=>r.link==='pending');
-  if(pend.length){
-    const a=await modal({title:'Terdeteksi kemungkinan link',
-      body:'<p><b>'+fmtN(pend.length)+' baris</b> berisi <code class="k">http://</code> atau <code class="k">https://</code>. Tool ini dikhususkan untuk QR non-link. Lanjutkan?</p><ul class="mini">'+
-        pend.slice(0,5).map(r=>'<li>Baris '+r.n+': <span class="mono">'+esc(trunc(r.content,60))+'</span></li>').join('')+(pend.length>5?'<li>dan '+fmtN(pend.length-5)+' lainnya</li>':'')+'</ul>',
-      buttons:[{label:'Tinjau per baris',value:'review'},{label:'Batalkan semua link',value:'skip',track:'Modal link: Batalkan semua'},{label:'Lanjutkan semua',value:'allow',primary:true,track:'Modal link: Lanjutkan semua'}]});
-    if(!a||a==='review'){pv.filter='warn';pv.page=0;$$('.fchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='warn')));renderPreview();$('#step3').scrollIntoView({behavior:'smooth'});return;}
-    pend.forEach(r=>r.link=a);validateAll();renderPreview();
-  }
   const opts=bulkOpts();
   const okRows=rows.filter(r=>r.status!=='err');
   if(!okRows.length)return modal({title:'Tidak ada baris valid',body:'<p>Semua baris berstatus error. Perbaiki di tabel preview terlebih dahulu.</p>'});
@@ -1250,7 +1251,8 @@ async function generateAll(){
       opts,cats,clicks:0,downloads:1,zipName:name,
       items:ok.slice(0,5000).map(r=>({n:r.n,id:r.id,nm:r.nama,kt:r.kat,c:r.content,f:r.fname,lb:r.label,lv:r.levelUsed})),
       skipped:allSkipped.slice(0,1000).map(s=>({n:s.n,id:s.id,nm:s.nama,kt:s.kat,c:s.content,r:s.reason})),trimmed:ok.length>5000});
-    track('bulk_generate',{mode:'bulk',n:ok.length,cats,fmt:opts.format});
+    const doms={};ok.forEach(r=>{const d=domainOf(r.content)||'(bukan link)';doms[d]=(doms[d]||0)+1;});
+    track('bulk_generate',{mode:'bulk',n:ok.length,cats,doms,fmt:opts.format});
     saveBlob(blob,name);track('zip_download',{mode:'bulk',n:ok.length,fmt:opts.format,auto:true});
     updateSteps();
   }catch(e){
@@ -1300,7 +1302,7 @@ function renderHistory(){
         (single?'<span class="h-thumb"><canvas width="58" height="58"></canvas></span>':'<span class="h-thumb bulk"><span><b>'+fmtN(h.success)+'</b><small>QR</small></span></span>')+
         '<span class="h-body"><span class="h-title'+(single&&!h.label?' mono':'')+'">'+esc(trunc(title,90))+'</span>'+(single&&h.label?'<span class="hint mono">'+esc(trunc(h.content,80))+'</span>':'')+'<span class="h-meta">'+meta+'</span></span></button>'+
       '<div class="h-side"><div class="h-stats"><span title="Berapa kali dibuka">'+ic('eye')+fmtN(h.clicks||0)+' dibuka</span><span title="Berapa kali diunduh">'+ic('dl')+fmtN(h.downloads||0)+' unduhan</span></div>'+
-      (single?'<button class="btn ghost sm" data-act="png" data-track="Riwayat: Unduh PNG">PNG</button><button class="btn ghost sm" data-act="svg" data-track="Riwayat: Unduh SVG">SVG</button>'
+      (single?(urlKind(h.content)==='url'?'<a class="btn ghost sm" href="'+esc(h.content)+'" target="_blank" rel="noopener" data-link data-track="Riwayat: Buka link">Buka link</a>':'')+'<button class="btn ghost sm" data-act="png" data-track="Riwayat: Unduh PNG">PNG</button><button class="btn ghost sm" data-act="svg" data-track="Riwayat: Unduh SVG">SVG</button>'
         :'<button class="btn ghost sm" data-act="zip" data-track="Riwayat: Buat ulang ZIP"'+((h.items||[]).length?'':' disabled title="Daftar item tidak tersimpan"')+'>ZIP</button>')+
       '<button class="icon-btn danger" data-act="del" aria-label="Hapus dari riwayat" data-track="Riwayat: Hapus entri">'+ic('trash')+'</button></div></article>';
   }).join('');
@@ -1331,8 +1333,8 @@ async function histRegenZip(h){
 }
 async function openBulkDetail(h){
   const items=h.items||[];
-  const tbl=list=>'<div class="table-wrap" style="max-height:48vh"><table><thead><tr><th>Baris</th><th>ID</th><th>Nama</th><th>Isi QR</th><th>File</th><th></th></tr></thead><tbody>'+
-    list.slice(0,300).map(it=>'<tr><td class="num">'+it.n+'</td><td class="mono">'+esc(it.id||'—')+'</td><td>'+esc(it.nm||'')+'</td><td class="mono">'+esc(trunc(it.c,50))+'</td><td class="mono">'+esc(it.f)+'</td><td><button class="btn ghost sm" data-png="'+items.indexOf(it)+'" data-track="Riwayat batch: Unduh PNG item">PNG</button></td></tr>').join('')+
+  const tbl=list=>'<div class="table-wrap" style="max-height:48vh"><table><thead><tr><th>Baris</th><th>ID</th><th>Nama</th><th>Link</th><th>File</th><th></th></tr></thead><tbody>'+
+    list.slice(0,300).map(it=>'<tr><td class="num">'+it.n+'</td><td class="mono">'+esc(it.id||'—')+'</td><td>'+esc(it.nm||'')+'</td><td class="mono">'+esc(trunc(it.c,50))+'</td><td class="mono">'+esc(it.f)+'</td><td style="white-space:nowrap">'+(urlKind(it.c)==='url'?'<a class="btn ghost sm" href="'+esc(it.c)+'" target="_blank" rel="noopener" data-link data-track="Riwayat batch: Buka link">Buka</a> ':'')+'<button class="btn ghost sm" data-png="'+items.indexOf(it)+'" data-track="Riwayat batch: Unduh PNG item">PNG</button></td></tr>').join('')+
     '</tbody></table></div>'+(list.length>300?'<p class="hint">Menampilkan 300 dari '+fmtN(list.length)+' item. Gunakan pencarian untuk mempersempit.</p>':'');
   const o=h.opts||{};
   const body='<div class="kpis" style="margin-top:0"><div class="kpi"><b>'+fmtN(h.total)+'</b><span>Total baris</span></div><div class="kpi ok"><b>'+fmtN(h.success)+'</b><span>Berhasil</span></div><div class="kpi err"><b>'+fmtN(h.skippedN||0)+'</b><span>Dilewati</span></div></div>'+
@@ -1370,6 +1372,7 @@ const EV_TEXT=e=>{switch(e.type){
   case 'template_download':return 'Unduh template Excel';
   case 'history_open':return 'Membuka riwayat '+(e.mode==='bulk'?'batch':'single');
   case 'copy':return 'Salin QR';
+  case 'link_open':return 'Buka link '+(e.dom||'');
   case 'click':return 'Klik: '+e.label;
   default:return e.type;}};
 function hbars(list,alt){
@@ -1400,7 +1403,7 @@ function renderAnalytics(){
   const clicks=ev.filter(e=>e.type==='click');
   const days=new Set(ev.map(e=>dayKey(e.t))).size;
   const opens=ev.filter(e=>e.type==='history_open').length;
-  $('#aKpis').innerHTML=[[totalQR,'QR dibuat'],[dls,'Unduhan'],[clicks.length,'Total klik'],[opens,'Riwayat dibuka'],[days,'Hari aktif']].map(k=>'<div class="kpi"><b>'+fmtN(k[0])+'</b><span>'+k[1]+'</span></div>').join('');
+  $('#aKpis').innerHTML=[[totalQR,'QR dibuat'],[dls,'Unduhan'],[clicks.length,'Total klik'],[ev.filter(e=>e.type==='link_open').length,'Link dibuka'],[opens,'Riwayat dibuka'],[days,'Hari aktif']].map(k=>'<div class="kpi"><b>'+fmtN(k[0])+'</b><span>'+k[1]+'</span></div>').join('');
 
   // daily
   let dayCount=aRange||0;
@@ -1431,17 +1434,23 @@ function renderAnalytics(){
   $('#aModes').innerHTML='<p class="hint" style="margin:0 0 4px">QR per mode</p>'+hbars([{l:'Single',v:single},{l:'Bulk',v:bulk}].filter(x=>x.v))+
     '<p class="hint" style="margin:14px 0 4px">Unduhan per format</p>'+hbars(Object.entries(fm).map(([l,v])=>({l,v})),true);
 
-  // hours
-  const hrs=new Array(24).fill(0);ev.forEach(e=>hrs[new Date(e.t).getHours()]++);
-  $('#aHours').innerHTML=barChart(hrs.map((_,i)=>({s:i%3===0?pad(i):'',full:'Jam '+pad(i)+':00'})),[{name:'aktivitas',values:hrs,cls:'b1'}],200,420);
+  // domains
+  const dq={},dc={};
+  ev.forEach(e=>{
+    if(e.type==='generate'){const k=e.dom||'(bukan link)';dq[k]=(dq[k]||0)+1;}
+    if(e.type==='bulk_generate'&&e.doms)Object.entries(e.doms).forEach(([k,v])=>dq[k]=(dq[k]||0)+v);
+    if(e.type==='link_open'){const k=e.dom||'(lainnya)';dc[k]=(dc[k]||0)+1;}
+  });
+  const dk=[...new Set([...Object.keys(dq),...Object.keys(dc)])].sort((a,b)=>((dq[b]||0)+(dc[b]||0))-((dq[a]||0)+(dc[a]||0))).slice(0,8);
+  $('#aDoms').innerHTML=dk.length?'<ul class="log">'+dk.map(k=>'<li><span class="mono">'+esc(k)+'</span><time>'+fmtN(dq[k]||0)+' QR, '+fmtN(dc[k]||0)+' klik</time></li>').join('')+'</ul>':'<p class="hint">Belum ada data pada rentang ini.</p>';
 
   // log
   const last=ev.slice(-20).reverse();
   $('#aLog').innerHTML=last.length?last.map(e=>'<li><span>'+esc(EV_TEXT(e))+'</span><time>'+fmtTime(e.t)+'</time></li>').join(''):'<li class="hint">Belum ada aktivitas.</li>';
 }
 function exportEvents(){
-  const r=[['Waktu','Tipe','Deskripsi','Label_Tombol','Mode','Jumlah','Format','Kategori']];
-  events.forEach(e=>r.push([new Date(e.t).toISOString(),e.type,EV_TEXT(e),e.label||'',e.mode||'',e.n||'',e.fmt||'',e.cat||(e.cats?Object.keys(e.cats).join('; '):'')]));
+  const r=[['Waktu','Tipe','Deskripsi','Label_Tombol','Mode','Jumlah','Format','Kategori','Link']];
+  events.forEach(e=>r.push([new Date(e.t).toISOString(),e.type,EV_TEXT(e),e.label||'',e.mode||'',e.n||'',e.fmt||'',e.cat||(e.cats?Object.keys(e.cats).join('; '):''),e.url||e.dom||'']));
   saveBlob(new Blob(['\uFEFF'+r.map(x=>x.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'analitik-klik-'+stamp()+'.csv');
 }
 
@@ -1461,6 +1470,7 @@ function bind(){
   $('#sPng').addEventListener('click',()=>singleDownload('png'));
   $('#sSvg').addEventListener('click',()=>singleDownload('svg'));
   $('#sCopy').addEventListener('click',singleCopy);
+  $('#sFixUrl').addEventListener('click',()=>{S.text.value='https://'+S.text.value.trim();renderSingle();});
 
   // schema
   const sb=$('#schemaBody');let oldHeader='';
@@ -1501,7 +1511,7 @@ function bind(){
     const ok=await modal({title:'Reset skema?',body:'<p>Skema kembali ke 6 kolom pakem standar: No, ID, Nama, Kategori, Data_QR, Catatan. Kolom kustom akan dihapus.</p>',buttons:[{label:'Batal',value:false},{label:'Reset skema',value:true,danger:true}]});
     if(!ok)return;schema=PRESETS.standar();if(fileState)autoMap();schemaChanged();
   });
-  $('#qrSource').addEventListener('change',e=>{schema.source=e.target.value;if(schema.source==='pattern'&&!schema.pattern)schema.pattern='{ID}|{Kategori}';$('#qrPattern').value=schema.pattern;markCustom();schemaChanged({noRender:true});});
+  $('#qrSource').addEventListener('change',e=>{schema.source=e.target.value;if(schema.source==='pattern'&&!schema.pattern)schema.pattern='https://skala.stekom.ac.id/profil/{ID}';$('#qrPattern').value=schema.pattern;markCustom();schemaChanged({noRender:true});});
   ['qrPattern','fnPattern'].forEach(id=>{
     const el=$('#'+id);
     el.addEventListener('focus',()=>{lastPatternInput=el;});
@@ -1557,14 +1567,14 @@ function bind(){
   tb.addEventListener('paste',e=>{if(!e.target.closest('td[data-k]'))return;e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text').replace(/[\r\n]+/g,' ');document.execCommand('insertText',false,t);});
   tb.addEventListener('click',e=>{
     const b=e.target.closest('[data-act]');if(!b)return;const r=rows[+b.closest('tr').dataset.i];if(!r)return;
-    if(b.dataset.act==='lallow')r.link='allow';else if(b.dataset.act==='lskip')r.link='skip';
+    if(b.dataset.act==='fixurl'){const k=roleKey('data');r.v[k]='https://'+r.v[k];validateAll();renderPreview();resetResult();return;}
     else if(b.dataset.act==='del'){rows.splice(r._i,1);validateAll();renderPreview();resetResult();return;}
     validateAll();updateVisible();
   });
-  $('#linkBar').addEventListener('click',e=>{const b=e.target.closest('[data-linkall]');if(!b)return;rows.forEach(r=>{if(r.link==='pending')r.link=b.dataset.linkall;});validateAll();renderPreview();});
+  $('#linkBar').addEventListener('click',e=>{if(!e.target.closest('[data-fixall]'))return;const k=roleKey('data');let n=0;rows.forEach(r=>{if(r.uk==='domain'&&r.src==='Data_QR'){r.v[k]='https://'+r.v[k];n++;}});validateAll();renderPreview();resetResult();toast('https:// ditambahkan ke '+fmtN(n)+' baris');});
   $('#addRow').addEventListener('click',()=>{
     const n=rows.reduce((m,r)=>Math.max(m,r.n),1)+1;const v={};schema.cols.forEach(c=>v[c.key]='');
-    rows.push({n,v,link:null});validateAll();pv.filter='all';pv.q='';$('#pvSearch').value='';
+    rows.push({n,v});validateAll();pv.filter='all';pv.q='';$('#pvSearch').value='';
     $$('.fchip').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.filter==='all')));
     pv.page=Math.floor((rows.length-1)/pv.size);renderPreview();updateSteps();
     const last=$('#pvTable tbody tr:last-child td[data-k]');if(last){last.focus();}
