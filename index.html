@@ -3,143 +3,1627 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Generator QR Code</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>QR Generator — Single & Bulk Excel</title>
+<meta name="description" content="Generator QR code data mentah (non-link), single & bulk dari Excel. 100% berjalan di browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1f3a'/%3E%3Cpath fill='%23f2c12e' d='M7 7h7v7H7zM18 7h7v7h-7zM7 18h7v7H7zM18 18h3v3h-3zM22 22h3v3h-3zM18 23h3v2h-3zM23 18h2v3h-2z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Library (versi pinned, non-module). Fallback jsDelivr dimuat otomatis bila cdnjs gagal. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 <style>
-  :root{
-    --bg:#f5f6f8; --card:#ffffff; --text:#1a1a1a; --muted:#6b7280;
-    --accent:#2563eb; --border:#e5e7eb;
+:root{
+  --paper:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --ink:#0f1f3a; --ink-2:#2a3a57;
+  --muted:#5b6678; --line:#d8dee7; --line-2:#c3cbd7;
+  --tape:#f2c12e; --tape-ink:#3b2d00; --tape-soft:#fdf3cf;
+  --primary:#0f1f3a; --primary-ink:#ffffff;
+  --ok:#17803d; --ok-soft:#e5f4ea; --warn:#9a5b00; --warn-soft:#fdf1d6; --err:#b42318; --err-soft:#fcebea;
+  --info:#2c4f9e; --info-soft:#e8eefb;
+  --font:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0b1120; --surface:#121a2b; --surface-2:#172136; --ink:#e7ecf4; --ink-2:#c3cde0;
+    --muted:#95a1b6; --line:#243149; --line-2:#31405c;
+    --tape:#f2c12e; --tape-ink:#2b2100; --tape-soft:#3a3113;
+    --primary:#f2c12e; --primary-ink:#1a1400;
+    --ok:#5fd28a; --ok-soft:#12301f; --warn:#f3b64b; --warn-soft:#352812; --err:#ff8a80; --err-soft:#3a1a1a;
+    --info:#9db4ff; --info-soft:#1b2748;
+    color-scheme:dark;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --bg:#0f1115; --card:#1a1d24; --text:#f1f1f1; --muted:#9ca3af;
-      --accent:#3b82f6; --border:#2a2e37;
-    }
-  }
-  :root[data-theme="dark"]{
-    --bg:#0f1115; --card:#1a1d24; --text:#f1f1f1; --muted:#9ca3af;
-    --accent:#3b82f6; --border:#2a2e37;
-  }
-  *{box-sizing:border-box;}
-  html{scroll-padding-top:env(safe-area-inset-top,0px);}
-  body{
-    margin:0; min-height:100%;
-    background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));
-    display:flex; justify-content:center;
-  }
-  .wrap{width:100%; max-width:420px;}
-  h1{font-size:20px; margin:0 0 4px;}
-  p.sub{color:var(--muted); margin:0 0 20px; font-size:14px;}
-  .card{
-    background:var(--card); border:1px solid var(--border); border-radius:16px;
-    padding:20px; margin-bottom:16px;
-  }
-  label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px;}
-  input[type=text]{
-    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
-    background:var(--bg); color:var(--text); font-size:15px; margin-bottom:14px;
-  }
-  input[type=color]{width:44px;height:32px;border:none;background:none;padding:0;vertical-align:middle;}
-  .row{display:flex; gap:12px; align-items:center; margin-bottom:14px;}
-  .row label{margin-bottom:0; flex:1;}
-  select{
-    padding:8px; border-radius:10px; border:1px solid var(--border);
-    background:var(--bg); color:var(--text);
-  }
-  button{
-    width:100%; padding:12px; border:none; border-radius:10px;
-    background:var(--accent); color:#fff; font-size:15px; font-weight:600;
-    cursor:pointer;
-  }
-  button.secondary{
-    background:transparent; color:var(--accent); border:1px solid var(--accent);
-    margin-top:8px;
-  }
-  #qrbox{
-    display:flex; justify-content:center; align-items:center;
-    background:#fff; border-radius:12px; padding:16px; min-height:240px;
-  }
-  #qrbox img, #qrbox canvas{max-width:100%; height:auto;}
-  .hint{font-size:12px;color:var(--muted); text-align:center; margin-top:10px;}
+}
+:root[data-theme="dark"]{
+  --paper:#0b1120; --surface:#121a2b; --surface-2:#172136; --ink:#e7ecf4; --ink-2:#c3cde0;
+  --muted:#95a1b6; --line:#243149; --line-2:#31405c;
+  --tape:#f2c12e; --tape-ink:#2b2100; --tape-soft:#3a3113;
+  --primary:#f2c12e; --primary-ink:#1a1400;
+  --ok:#5fd28a; --ok-soft:#12301f; --warn:#f3b64b; --warn-soft:#352812; --err:#ff8a80; --err-soft:#3a1a1a;
+  --info:#9db4ff; --info-soft:#1b2748;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;}
+.app{max-width:1180px;margin:0 auto;padding:20px 16px 48px;}
+h1,h2,h3{margin:0;line-height:1.25;}
+button,input,select,textarea{font:inherit;color:inherit;}
+:focus-visible{outline:2px solid var(--tape);outline-offset:2px;}
+.ic{width:18px;height:18px;flex:none;}
+[hidden]{display:none !important;}
+
+/* Header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.mark{width:40px;height:40px;flex:none;}
+.brand h1{font-size:22px;font-weight:800;letter-spacing:-.02em;}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13.5px;}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;}
+.seg button{border:0;background:transparent;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted);}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);}
+
+.privacy{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--tape);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink-2);margin-bottom:18px;}
+.privacy svg{width:20px;height:20px;flex:none;margin-top:1px;color:var(--ink);}
+.privacy b{color:var(--ink);}
+
+/* Tabs — tape underline */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{position:relative;border:0;background:none;padding:12px 16px 13px;font-weight:700;font-size:15px;color:var(--muted);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;}
+.tab[aria-selected="true"]{color:var(--ink);}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:5px;background:var(--tape);border-radius:2px 2px 0 0;}
+.tab .count{font-size:12px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--ink-2);}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px;}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.card-h h2{font-size:17px;font-weight:700;letter-spacing:-.01em;}
+.card-h .tl{display:flex;align-items:center;gap:10px;}
+.stepno{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;background:var(--ink);color:var(--surface);font-weight:800;font-size:14px;flex:none;}
+.card.is-done .stepno{background:var(--tape);color:var(--tape-ink);}
+.desc{color:var(--muted);margin:-4px 0 14px;font-size:14px;max-width:72ch;}
+.hint{color:var(--muted);font-size:13px;}
+.hint.c{text-align:center;margin:10px 0 0;}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start;}
+@media (max-width:860px){.grid-2{grid-template-columns:1fr;}}
+
+/* Form */
+.fld{display:block;margin-bottom:12px;min-width:0;}
+.fld>span{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:5px;}
+.in{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface-2);font-size:14.5px;min-width:0;}
+.in:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--tape) 45%,transparent);}
+.in.sm{padding:6px 9px;font-size:13.5px;width:auto;}
+.in.invalid{border-color:var(--err);background:var(--err-soft);}
+textarea.in{resize:vertical;min-height:76px;}
+.mono{font-family:var(--mono);font-size:13.5px;}
+input[type=color].in{padding:3px;height:40px;cursor:pointer;}
+.fields{display:grid;gap:0 12px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;margin:6px 0 14px;}
+.check input{width:18px;height:18px;accent-color:var(--ink);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14.5px;cursor:pointer;border:1px solid transparent;text-decoration:none;white-space:nowrap;}
+.btn.primary{background:var(--primary);color:var(--primary-ink);}
+.btn.primary:hover{filter:brightness(1.12);}
+.btn.tape{background:var(--tape);color:var(--tape-ink);}
+.btn.tape:hover{filter:brightness(1.05);}
+.btn.ghost{background:var(--surface);border-color:var(--line-2);color:var(--ink);}
+.btn.ghost:hover{background:var(--surface-2);}
+.btn.danger{background:var(--err-soft);color:var(--err);border-color:color-mix(in srgb,var(--err) 30%,transparent);}
+.btn.sm{padding:6px 10px;font-size:13px;border-radius:8px;}
+.btn.block{width:100%;}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;width:28px;height:28px;display:inline-grid;place-items:center;cursor:pointer;color:var(--ink-2);padding:0;}
+.icon-btn:hover{background:var(--surface-2);}
+.icon-btn:disabled{opacity:.3;cursor:default;}
+.icon-btn.danger:hover{color:var(--err);border-color:var(--err);}
+.icon-btn .ic{width:15px;height:15px;}
+
+/* Alerts & pills */
+.alert{border-radius:10px;padding:10px 12px;font-size:13.5px;margin:0 0 12px;border:1px solid transparent;}
+.alert.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 25%,transparent);}
+.alert.err{background:var(--err-soft);color:var(--err);border-color:color-mix(in srgb,var(--err) 25%,transparent);}
+.alert.info{background:var(--info-soft);color:var(--info);}
+.alert.ok{background:var(--ok-soft);color:var(--ok);}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent;}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent;}
+.pill.err{background:var(--err-soft);color:var(--err);border-color:transparent;}
+.meta-line{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 12px;}
+
+/* The sticker stage — the one memorable element */
+.stage{position:relative;background:repeating-linear-gradient(135deg,var(--surface-2) 0 10px,var(--surface) 10px 20px);border:1px solid var(--line);border-radius:12px;padding:28px 16px;display:grid;place-items:center;min-height:300px;}
+.sticker{position:relative;background:#fff;border-radius:10px;padding:10px;box-shadow:0 1px 0 rgba(15,31,58,.06),0 10px 24px -12px rgba(15,31,58,.35);outline:1.5px dashed rgba(15,31,58,.28);outline-offset:6px;max-width:100%;}
+.sticker canvas{display:block;max-width:100%;height:auto;width:260px;}
+.sticker::before{content:"";position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(-2deg);width:64px;height:16px;background:color-mix(in srgb,var(--tape) 80%,transparent);border-radius:2px;}
+.stage .empty{color:var(--muted);font-size:14px;text-align:center;max-width:24ch;}
+
+/* Stepper */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 16px;padding:0;list-style:none;counter-reset:s;}
+.steps li button{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;font-size:13.5px;font-weight:700;color:var(--muted);}
+.steps li button span.n{width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);font-size:12px;flex:none;color:var(--ink-2);}
+.steps li.done button{color:var(--ink);}
+.steps li.done button span.n{background:var(--tape);border-color:var(--tape);color:var(--tape-ink);}
+@media (max-width:720px){.steps{grid-template-columns:repeat(2,1fr);}}
+
+/* Tables */
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);}
+.table-wrap.tall{max-height:62vh;}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+thead th{position:sticky;top:0;z-index:2;background:var(--surface-2);font-size:12.5px;font-weight:700;color:var(--ink-2);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:0;}
+td.num{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td.c,th.c{text-align:center;}
+.schema td{vertical-align:middle;}
+.schema td .in{padding:7px 9px;font-size:14px;}
+.schema .ord{white-space:nowrap;width:70px;}
+.role{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap;}
+.role.core{background:var(--tape-soft);border-color:transparent;color:var(--ink);}
+.role.custom{background:var(--info-soft);color:var(--info);border-color:transparent;}
+.lock{font-size:12px;color:var(--muted);}
+.add-col{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;}
+.add-col .in{flex:1;min-width:180px;}
+
+.pattern-box{border:1px dashed var(--line-2);border-radius:12px;padding:14px;margin:6px 0 4px;background:var(--surface-2);}
+.pattern-box .in{background:var(--surface);}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:3px 9px;font-family:var(--mono);font-size:12.5px;cursor:pointer;}
+.chip:hover{border-color:var(--ink);}
+.chips-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.example{font-size:13px;color:var(--ink-2);display:grid;gap:4px;}
+.example code{font-family:var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1px 6px;word-break:break-all;}
+
+/* Dropzone */
+.drop{border:2px dashed var(--line-2);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;background:var(--surface-2);}
+.drop:hover,.drop.over{border-color:var(--ink);background:var(--tape-soft);}
+.drop b{display:block;font-size:16px;margin-bottom:4px;}
+.drop svg{width:34px;height:34px;color:var(--ink-2);margin-bottom:6px;}
+.file-info{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:14px;}
+.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin-top:12px;}
+.map-item{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface-2);}
+.map-item label{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:4px;gap:6px;}
+.map-item.miss{border-color:var(--warn);}
+.map-item.bad{border-color:var(--err);}
+
+/* Preview */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+.toolbar .grow{flex:1;min-width:180px;}
+.fchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink);}
+.fchip .dot{width:8px;height:8px;border-radius:50%;}
+.dot.ok{background:var(--ok);} .dot.warn{background:var(--warn);} .dot.err{background:var(--err);}
+.pv td[contenteditable]{min-width:110px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;}
+.pv td[contenteditable]:hover{background:var(--surface-2);}
+.pv td[contenteditable]:focus{white-space:pre-wrap;overflow:visible;outline:2px solid var(--tape);outline-offset:-2px;background:var(--surface);}
+.pv td.qc{max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2);}
+.pv td.sticky,.pv th.sticky{position:sticky;left:0;z-index:1;background:var(--surface);}
+.pv thead th.sticky{z-index:3;background:var(--surface-2);}
+.pv tr.st-warn td{background:color-mix(in srgb,var(--warn-soft) 70%,transparent);}
+.pv tr.st-err td{background:color-mix(in srgb,var(--err-soft) 70%,transparent);}
+.pv tr.st-warn td.sticky{background:var(--warn-soft);} .pv tr.st-err td.sticky{background:var(--err-soft);}
+.st{min-width:210px;}
+.st ul{margin:4px 0 0;padding:0;list-style:none;font-size:12px;}
+.st li{margin:1px 0;}
+.st li.err{color:var(--err);} .st li.warn{color:var(--warn);} .st li.info{color:var(--muted);}
+.st .lk{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);}
+.empty-box{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line-2);border-radius:12px;}
+
+/* Progress */
+.prog{margin-top:14px;}
+.bar{height:10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;}
+.bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .15s linear;}
+:root[data-theme="dark"] .bar i{background:var(--tape);}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bar i{background:var(--tape);}}
+.prog-t{display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px;font-weight:600;gap:8px;}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:14px 0;}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface-2);}
+.kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1;}
+.kpi span{font-size:13px;color:var(--muted);font-weight:600;}
+.kpi.ok b{color:var(--ok);} .kpi.warn b{color:var(--warn);} .kpi.err b{color:var(--err);}
+details{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--surface);}
+details summary{cursor:pointer;font-weight:700;font-size:14px;}
+details .table-wrap{margin-top:10px;max-height:320px;}
+
+/* History */
+.h-list{display:grid;gap:10px;}
+.h-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.h-main{display:flex;gap:12px;align-items:center;border:0;background:none;text-align:left;cursor:pointer;min-width:0;padding:0;}
+.h-thumb{width:64px;height:64px;border-radius:9px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex:none;overflow:hidden;}
+.h-thumb canvas{width:58px;height:58px;image-rendering:pixelated;}
+.h-thumb.bulk{background:var(--tape);color:var(--tape-ink);border-color:transparent;text-align:center;line-height:1.05;}
+.h-thumb.bulk b{font-size:18px;display:block;font-weight:800;}
+.h-thumb.bulk small{font-size:11px;font-weight:700;}
+.h-body{min-width:0;display:grid;gap:3px;}
+.h-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-title.mono{font-weight:500;}
+.h-meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px;color:var(--muted);}
+.h-side{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.h-stats{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);font-weight:600;}
+.h-stats span{display:inline-flex;align-items:center;gap:4px;}
+.h-stats .ic{width:14px;height:14px;}
+@media (max-width:640px){.h-item{grid-template-columns:1fr;}.h-side{justify-content:flex-start;}}
+
+/* Analytics */
+.a-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+@media (max-width:860px){.a-grid{grid-template-columns:1fr;}}
+.a-grid .card{margin:0;}
+.hbar{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:10px;align-items:center;font-size:13.5px;margin:7px 0;}
+.hbar .lb{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2);}
+.hbar .tr{height:12px;background:var(--surface-2);border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+.hbar .tr i{display:block;height:100%;background:var(--ink);border-radius:3px;}
+.hbar.alt .tr i{background:var(--tape);}
+.hbar .vl{font-weight:700;font-variant-numeric:tabular-nums;min-width:2ch;text-align:right;}
+.chart svg{width:100%;height:auto;display:block;}
+.chart .b1{fill:var(--ink);} .chart .b2{fill:var(--tape);}
+.chart .gl{stroke:var(--line);stroke-width:1;}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--font);}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--ink-2);margin-top:6px;flex-wrap:wrap;}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+.log{list-style:none;margin:0;padding:0;font-size:13.5px;}
+.log li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);}
+.log li:last-child{border:0;}
+.log time{color:var(--muted);font-size:12.5px;white-space:nowrap;}
+
+/* Modal & busy */
+.overlay{position:fixed;inset:0;background:rgba(8,14,28,.55);display:grid;place-items:center;padding:16px;z-index:50;}
+.modal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;}
+.modal-card.wide{max-width:900px;}
+.modal-card header{padding:16px 18px 0;}
+.modal-card header h3{font-size:17px;}
+.modal-body{padding:12px 18px;overflow:auto;font-size:14.5px;}
+.modal-body p{margin:0 0 10px;}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line);}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:60;width:min(92vw,420px);}
+.toast{background:var(--ink);color:var(--surface);padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600;transition:opacity .3s,transform .3s;}
+.toast.err{background:var(--err);color:#fff;}
+.toast.out{opacity:0;transform:translateY(6px);}
+code.k{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:0 5px;}
+ul.mini{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2);}
+@media (prefers-reduced-motion: reduce){*{transition:none !important;}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Generator QR Code</h1>
-  <p class="sub">Dibuat sendiri, langsung di browser — tanpa layanan pihak ketiga.</p>
+<div class="app">
 
-  <div class="card">
-    <label for="text">Teks / URL</label>
-    <input type="text" id="text" value="https://skala.stekom.ac.id">
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0f1f3a"/><path fill="#f2c12e" d="M7 7h7v7H7zM18 7h7v7h-7zM7 18h7v7H7zM18 18h3v3h-3zM22 22h3v3h-3zM18 23h3v2h-3zM23 18h2v3h-2z"/><path fill="#0f1f3a" d="M9 9h3v3H9zM20 9h3v3h-3zM9 20h3v3H9z"/></svg>
+    <div>
+      <h1>QR Generator</h1>
+      <p>QR berisi data mentah untuk kartu, presensi, tiket, dan label aset</p>
+    </div>
+  </div>
+  <div class="seg" role="group" aria-label="Tema tampilan">
+    <button data-theme-set="auto" data-track="Tema: Ikuti sistem">Sistem</button>
+    <button data-theme-set="light" data-track="Tema: Terang">Terang</button>
+    <button data-theme-set="dark" data-track="Tema: Gelap">Gelap</button>
+  </div>
+</header>
 
-    <div class="row">
-      <label>Ukuran
-        <select id="size">
-          <option value="200">200 px</option>
-          <option value="300" selected>300 px</option>
-          <option value="400">400 px</option>
-          <option value="600">600 px</option>
-        </select>
-      </label>
-      <label>Warna
-        <input type="color" id="color" value="#000000">
-      </label>
+<div class="privacy">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+  <div><b>Data Anda tidak meninggalkan perangkat ini.</b> Membaca Excel, membuat QR, dan mengemas ZIP semuanya berjalan di browser. Tidak ada NIM, nama, atau data lain yang dikirim ke server mana pun. Riwayat dan analitik disimpan di penyimpanan lokal browser ini.</div>
+</div>
+<div id="libError" class="alert err" hidden></div>
+
+<nav class="tabs" role="tablist" aria-label="Mode aplikasi">
+  <button class="tab" role="tab" data-tab="single" data-track="Tab: Single">Single</button>
+  <button class="tab" role="tab" data-tab="bulk" data-track="Tab: Bulk Excel">Bulk Excel</button>
+  <button class="tab" role="tab" data-tab="history" data-track="Tab: Riwayat">Riwayat <span class="count" id="histCount">0</span></button>
+  <button class="tab" role="tab" data-tab="analytics" data-track="Tab: Analitik">Analitik</button>
+</nav>
+
+<!-- ============ SINGLE ============ -->
+<section class="panel" id="tab-single" role="tabpanel">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-h"><h2>Isi QR</h2><span class="hint">Teks, ID, atau kode — bukan link</span></div>
+      <label class="fld"><span>Data yang di-encode</span>
+        <textarea id="sText" class="in mono" rows="3" spellcheck="false">SKALA-STEKOM-0001</textarea></label>
+      <div class="meta-line" id="sInfo"></div>
+      <div id="sLinkWarn" class="alert warn" hidden>Terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link, tetapi QR tetap bisa dibuat.</div>
+      <div class="fields">
+        <label class="fld"><span>Label di bawah QR</span><input id="sLabel" class="in" placeholder="Opsional, mis. Budi Santoso"></label>
+        <label class="fld"><span>Kategori</span><input id="sCat" class="in" list="catList" placeholder="Opsional, mis. Mahasiswa"></label>
+      </div>
+      <div class="fields">
+        <label class="fld"><span>Ukuran</span><select id="sSize" class="in">
+          <option value="200">200 px</option><option value="300" selected>300 px</option><option value="400">400 px</option><option value="600">600 px</option><option value="800">800 px</option><option value="1000">1000 px</option></select></label>
+        <label class="fld"><span>Koreksi error</span><select id="sEcl" class="in">
+          <option value="L">L — 7%</option><option value="M">M — 15%</option><option value="Q">Q — 25%</option><option value="H" selected>H — 30%</option></select></label>
+        <label class="fld"><span>Margin</span><select id="sMargin" class="in">
+          <option value="0">0</option><option value="2">2 modul</option><option value="4" selected>4 modul</option><option value="6">6 modul</option></select></label>
+        <label class="fld"><span>Warna QR</span><input type="color" id="sDark" class="in" value="#0f1f3a"></label>
+        <label class="fld"><span>Latar</span><input type="color" id="sLight" class="in" value="#ffffff"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="sShowLabel" checked> Cetak label di bawah QR</label>
+      <button class="btn primary block" id="sSave" data-track="Single: Simpan ke riwayat">Simpan ke riwayat</button>
     </div>
 
-    <button id="genBtn">Buat QR Code</button>
+    <div class="card">
+      <div class="card-h"><h2>Pratinjau</h2><span id="sState" class="pill"></span></div>
+      <div class="stage">
+        <div class="sticker" id="sSticker"><canvas id="sCanvas" width="300" height="300"></canvas></div>
+        <div class="empty" id="sEmpty" hidden>Ketik data di kolom kiri untuk melihat QR</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn tape" id="sPng" data-track="Single: Unduh PNG"><span data-ic="dl"></span>Unduh PNG</button>
+        <button class="btn ghost" id="sSvg" data-track="Single: Unduh SVG"><span data-ic="dl"></span>Unduh SVG</button>
+        <button class="btn ghost" id="sCopy" data-track="Single: Salin gambar"><span data-ic="copy"></span>Salin gambar</button>
+      </div>
+      <p class="hint c">Pratinjau diperbarui otomatis. Setiap unduhan tercatat di Riwayat.</p>
+    </div>
+  </div>
+  <datalist id="catList"></datalist>
+</section>
+
+<!-- ============ BULK ============ -->
+<section class="panel" id="tab-bulk" role="tabpanel" hidden>
+  <ol class="steps" id="steps">
+    <li data-step="1"><button data-goto="step1" data-track="Stepper: Skema"><span class="n">1</span>Skema & template</button></li>
+    <li data-step="2"><button data-goto="step2" data-track="Stepper: Upload"><span class="n">2</span>Upload Excel</button></li>
+    <li data-step="3"><button data-goto="step3" data-track="Stepper: Preview"><span class="n">3</span>Preview & edit</button></li>
+    <li data-step="4"><button data-goto="step4" data-track="Stepper: Generate"><span class="n">4</span>Generate & ZIP</button></li>
+  </ol>
+
+  <!-- Step 1 -->
+  <div class="card is-done" id="step1">
+    <div class="card-h">
+      <div class="tl"><span class="stepno">1</span><h2>Skema kolom (format pakem)</h2></div>
+      <label class="tl hint">Preset
+        <select id="preset" class="in sm" data-track="Skema: Pilih preset">
+          <option value="standar">Pakem standar</option>
+          <option value="presensi">Kartu / presensi mahasiswa</option>
+          <option value="aset">Label aset</option>
+          <option value="tiket">Tiket acara</option>
+          <option value="custom" hidden>Kustom</option>
+        </select></label>
+    </div>
+    <p class="desc">Kolom di bawah adalah placeholder pakem yang dipakai template Excel dan pembacaan file. Ubah nama header, tambah kolom sendiri, dan tentukan kolom wajib sebelum mengunduh template atau mengimpor data. Skema tersimpan otomatis.</p>
+
+    <div class="table-wrap schema">
+      <table>
+        <thead><tr><th>Urutan</th><th>Header kolom</th><th>Peran</th><th class="c">Wajib</th><th>Contoh isi (untuk template)</th><th></th></tr></thead>
+        <tbody id="schemaBody"></tbody>
+      </table>
+    </div>
+    <div class="add-col">
+      <input id="newCol" class="in" placeholder="Nama kolom baru, mis. Prodi" maxlength="40">
+      <button class="btn ghost" id="addCol" data-track="Skema: Tambah kolom"><span data-ic="plus"></span>Tambah kolom</button>
+    </div>
+    <div id="schemaMsg" class="alert err" hidden></div>
+
+    <div class="pattern-box">
+      <div class="fields">
+        <label class="fld"><span>Sumber isi QR</span>
+          <select id="qrSource" class="in">
+            <option value="column">Kolom Data_QR (kosong → ID)</option>
+            <option value="pattern">Rakit dari pola placeholder</option>
+          </select></label>
+        <label class="fld" id="qrPatternFld"><span>Pola isi QR</span>
+          <input id="qrPattern" class="in mono" placeholder="{ID}|{Kategori}" spellcheck="false"></label>
+      </div>
+      <label class="fld"><span>Pola nama file output</span>
+        <input id="fnPattern" class="in mono" value="{ID}_{Nama}" spellcheck="false"></label>
+      <div class="chips-row"><span class="hint">Klik untuk menyisipkan:</span><div class="chips" id="chips"></div></div>
+      <div class="example" id="patternExample"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="dlTemplate" data-track="Bulk: Download template"><span data-ic="dl"></span>Download template Excel</button>
+      <button class="btn ghost" id="resetSchema" data-track="Skema: Reset ke pakem">Reset ke pakem standar</button>
+    </div>
   </div>
 
-  <div class="card">
-    <div id="qrbox"></div>
-    <button class="secondary" id="downloadBtn">Unduh PNG</button>
-    <p class="hint">Klik "Buat QR Code" setiap kali mengubah teks, ukuran, atau warna.</p>
+  <!-- Step 2 -->
+  <div class="card" id="step2">
+    <div class="card-h"><div class="tl"><span class="stepno">2</span><h2>Upload file Excel</h2></div><span class="hint">.xlsx, .xls, atau .csv</span></div>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Pilih file Excel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <b>Tarik file ke sini atau klik untuk memilih</b>
+      <span class="hint">Sheet bernama "Data" dibaca lebih dulu; jika tidak ada, sheet pertama.</span>
+    </div>
+    <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" hidden>
+    <div id="fileInfo" class="file-info" hidden></div>
+    <div id="mapBox" hidden>
+      <div class="card-h" style="margin:16px 0 0"><h2 style="font-size:15px">Pemetaan kolom</h2><span class="hint">Cocokkan header file dengan skema jika namanya berbeda</span></div>
+      <div id="mapMsg"></div>
+      <div class="map-grid" id="mapGrid"></div>
+      <div id="extraCols"></div>
+      <div class="btn-row"><button class="btn ghost sm" id="applyMap" data-track="Bulk: Terapkan pemetaan">Terapkan pemetaan ulang</button></div>
+    </div>
   </div>
+
+  <!-- Step 3 -->
+  <div class="card" id="step3">
+    <div class="card-h"><div class="tl"><span class="stepno">3</span><h2>Preview & edit</h2></div><span class="hint">Klik sel untuk mengedit, Enter untuk simpan</span></div>
+    <div id="pvEmpty" class="empty-box">Belum ada data. Upload file di langkah 2 untuk melihat semua baris di sini.</div>
+    <div id="pvBox" hidden>
+      <div class="toolbar">
+        <button class="fchip" data-filter="all" aria-pressed="true">Semua <span id="c-all">0</span></button>
+        <button class="fchip" data-filter="ok"><i class="dot ok"></i>OK <span id="c-ok">0</span></button>
+        <button class="fchip" data-filter="warn"><i class="dot warn"></i>Warning <span id="c-warn">0</span></button>
+        <button class="fchip" data-filter="err"><i class="dot err"></i>Error <span id="c-err">0</span></button>
+        <input id="pvSearch" class="in sm grow" placeholder="Cari ID, nama, isi…" type="search">
+        <button class="btn ghost sm" id="addRow" data-track="Preview: Tambah baris"><span data-ic="plus"></span>Baris</button>
+      </div>
+      <div id="linkBar" class="alert warn" hidden></div>
+      <div class="table-wrap tall pv"><table id="pvTable"><thead></thead><tbody></tbody></table></div>
+      <div class="pager">
+        <span id="pgInfo"></span>
+        <span><button class="btn ghost sm" id="pgPrev">Sebelumnya</button> <button class="btn ghost sm" id="pgNext">Berikutnya</button></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="card" id="step4">
+    <div class="card-h"><div class="tl"><span class="stepno">4</span><h2>Generate & download ZIP</h2></div><span class="hint">Pengaturan berlaku untuk seluruh batch</span></div>
+    <div class="fields">
+      <label class="fld"><span>Ukuran QR</span><select id="bSize" class="in">
+        <option value="200">200 px</option><option value="300">300 px</option><option value="400" selected>400 px</option><option value="600">600 px</option><option value="800">800 px</option><option value="1000">1000 px</option></select></label>
+      <label class="fld"><span>Koreksi error</span><select id="bEcl" class="in">
+        <option value="L">L — 7%</option><option value="M">M — 15%</option><option value="Q">Q — 25%</option><option value="H" selected>H — 30%</option></select></label>
+      <label class="fld"><span>Label di bawah QR</span><select id="bLabel" class="in">
+        <option value="nama" selected>Nama</option><option value="id">ID</option><option value="idnama">ID + Nama</option><option value="none">Sembunyikan</option></select></label>
+      <label class="fld"><span>Format file</span><select id="bFormat" class="in">
+        <option value="png" selected>PNG</option><option value="svg">SVG</option><option value="both">PNG + SVG</option></select></label>
+      <label class="fld"><span>Margin</span><select id="bMargin" class="in">
+        <option value="0">0</option><option value="2">2 modul</option><option value="4" selected>4 modul</option><option value="6">6 modul</option></select></label>
+      <label class="fld"><span>Warna QR</span><input type="color" id="bDark" class="in" value="#000000"></label>
+      <label class="fld"><span>Latar</span><input type="color" id="bLight" class="in" value="#ffffff"></label>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="genAll" data-track="Bulk: Generate semua" disabled>Generate semua</button>
+      <button class="btn tape" id="dlZip" data-track="Bulk: Download ZIP" hidden><span data-ic="dl"></span>Download ZIP</button>
+    </div>
+    <div class="prog" id="prog" hidden>
+      <div class="bar"><i id="progBar"></i></div>
+      <div class="prog-t"><span id="progText">Menyiapkan…</span><button class="btn ghost sm" id="cancelRun" data-track="Bulk: Batalkan proses">Batalkan</button></div>
+    </div>
+    <div id="summary"></div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section class="panel" id="tab-history" role="tabpanel" hidden>
+  <div class="card">
+    <div class="card-h"><h2>Riwayat pembuatan QR</h2><span class="hint" id="histStorage"></span></div>
+    <div class="toolbar">
+      <input id="hSearch" class="in sm grow" type="search" placeholder="Cari isi, label, kategori, nama file…">
+      <select id="hType" class="in sm"><option value="all">Semua jenis</option><option value="single">Single</option><option value="bulk">Batch bulk</option></select>
+      <select id="hSort" class="in sm"><option value="new">Terbaru</option><option value="old">Terlama</option><option value="clicks">Paling sering dibuka</option><option value="dl">Paling sering diunduh</option></select>
+      <button class="btn ghost sm" id="hExport" data-track="Riwayat: Ekspor CSV"><span data-ic="dl"></span>Ekspor CSV</button>
+      <button class="btn danger sm" id="hClear" data-track="Riwayat: Hapus semua">Hapus semua</button>
+    </div>
+    <div class="h-list" id="hList"></div>
+  </div>
+</section>
+
+<!-- ============ ANALYTICS ============ -->
+<section class="panel" id="tab-analytics" role="tabpanel" hidden>
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Rentang waktu" id="aRange">
+      <button data-range="7" aria-pressed="false">7 hari</button>
+      <button data-range="30" aria-pressed="true">30 hari</button>
+      <button data-range="90" aria-pressed="false">90 hari</button>
+      <button data-range="0" aria-pressed="false">Semua</button>
+    </div>
+    <span class="grow"></span>
+    <button class="btn ghost sm" id="aExport" data-track="Analitik: Ekspor CSV"><span data-ic="dl"></span>Ekspor data klik</button>
+    <button class="btn danger sm" id="aReset" data-track="Analitik: Reset">Reset analitik</button>
+  </div>
+  <div class="alert info">QR di sini berisi data mentah, bukan link, sehingga pemindaian di lapangan tidak bisa dilacak. Analitik mencatat aktivitas di aplikasi ini: klik tombol, QR yang dibuat, unduhan, dan pembukaan ulang riwayat.</div>
+  <div class="kpis" id="aKpis"></div>
+  <div class="card chart"><div class="card-h"><h2>Aktivitas harian</h2></div><div id="aDaily"></div>
+    <div class="legend"><span><i style="background:var(--ink)"></i>QR dibuat</span><span><i style="background:var(--tape)"></i>Klik</span></div></div>
+  <div class="a-grid">
+    <div class="card"><div class="card-h"><h2>Klik per tombol</h2></div><div id="aButtons"></div></div>
+    <div class="card"><div class="card-h"><h2>Riwayat paling sering dibuka</h2></div><div id="aTopHist"></div></div>
+    <div class="card"><div class="card-h"><h2>QR per kategori</h2></div><div id="aCats"></div></div>
+    <div class="card"><div class="card-h"><h2>Mode & format unduhan</h2></div><div id="aModes"></div></div>
+    <div class="card chart"><div class="card-h"><h2>Jam paling aktif</h2></div><div id="aHours"></div></div>
+    <div class="card"><div class="card-h"><h2>Aktivitas terbaru</h2></div><ul class="log" id="aLog"></ul></div>
+  </div>
+</section>
+
 </div>
 
+<div class="overlay" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header><h3 id="modalTitle"></h3></header>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="overlay" id="busy" hidden>
+  <div class="modal-card">
+    <header><h3 id="busyTitle">Memproses</h3></header>
+    <div class="modal-body"><div class="bar"><i id="busyBar"></i></div><div class="prog-t"><span id="busyText">…</span></div></div>
+    <div class="modal-foot"><button class="btn ghost sm" id="busyCancel">Batalkan</button></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
 <script>
-  const qrbox = document.getElementById('qrbox');
-  let qr = null;
+(function(){
+'use strict';
 
-  function generate(){
-    const text = document.getElementById('text').value.trim() || 'https://skala.stekom.ac.id';
-    const size = parseInt(document.getElementById('size').value, 10);
-    const color = document.getElementById('color').value;
+/* ---------------- Library fallback loader ---------------- */
+const LIBS=[
+  {name:'qrcode-generator',test:()=>typeof window.qrcode==='function',url:'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'},
+  {name:'SheetJS (xlsx)',test:()=>typeof window.XLSX==='object',url:'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'},
+  {name:'JSZip',test:()=>typeof window.JSZip==='function',url:'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'}
+];
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s);});}
+async function ensureLibs(){
+  const missing=[];
+  for(const L of LIBS){ if(L.test()) continue; try{await loadScript(L.url);}catch(e){} if(!L.test()) missing.push(L.name); }
+  return missing;
+}
 
-    qrbox.innerHTML = '';
-    try{
-      qr = new QRCode(qrbox, {
-        text: text,
-        width: size,
-        height: size,
-        colorDark: color,
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }catch(e){
-      qrbox.innerHTML = '<p style="color:#dc2626;font-size:13px;">Gagal membuat QR: ' + e.message + '</p>';
-    }
+/* ---------------- Utilities ---------------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmtN=n=>Number(n||0).toLocaleString('id-ID');
+const trunc=(s,n)=>{s=String(s||'');return s.length>n?s.slice(0,n-1)+'…':s;};
+const pad=n=>String(n).padStart(2,'0');
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+const fmtTime=t=>new Date(t).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const stamp=()=>{const d=new Date();return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes());};
+const sleep0=()=>new Promise(r=>setTimeout(r,0));
+function fmtDur(ms){const s=Math.max(1,Math.round(ms/1000));if(s<60)return s+' detik';const m=Math.floor(s/60),r=s%60;return m+' menit'+(r?' '+r+' detik':'');}
+function fmtBytes(b){return b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';}
+
+const IC={
+  dl:'<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  trash:'<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>',
+  up:'<path d="M12 19V5m0 0l-5 5m5-5l5 5"/>',
+  down:'<path d="M12 5v14m0 0l-5-5m5 5l5-5"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  open:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'
+};
+const ic=n=>'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[n]+'</svg>';
+
+const LS='qrgen.v2.';
+const store={
+  get(k,d){try{const v=localStorage.getItem(LS+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v));return true;}catch(e){return false;}},
+  del(k){try{localStorage.removeItem(LS+k);}catch(e){}}
+};
+
+function toast(msg,kind){
+  const t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),320);},2600);
+}
+function saveBlob(blob,name){
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
+function modal(o){
+  return new Promise(res=>{
+    const ov=$('#modal');$('#modalTitle').textContent=o.title||'';$('#modalBody').innerHTML=o.body||'';
+    ov.querySelector('.modal-card').classList.toggle('wide',!!o.wide);
+    const f=$('#modalFoot');f.innerHTML='';
+    (o.buttons||[{label:'Tutup',value:null,primary:true}]).forEach(b=>{
+      const el=document.createElement('button');
+      el.className='btn '+(b.primary?'primary':b.danger?'danger':b.tape?'tape':'ghost');
+      el.textContent=b.label;if(b.track)el.dataset.track=b.track;
+      el.onclick=()=>close(b.value);f.appendChild(el);
+    });
+    function onKey(e){if(e.key==='Escape')close(null);}
+    function close(v){ov.hidden=true;document.removeEventListener('keydown',onKey);res(v);}
+    ov.onclick=e=>{if(e.target===ov)close(null);};
+    document.addEventListener('keydown',onKey);
+    ov.hidden=false;
+    const first=f.querySelector('.btn.primary')||f.querySelector('.btn');if(first)first.focus();
+  });
+}
+function busy(title){
+  let cancelled=false;
+  $('#busyTitle').textContent=title;$('#busyText').textContent='Menyiapkan…';$('#busyBar').style.width='0%';
+  $('#busy').hidden=false;
+  $('#busyCancel').onclick=()=>{cancelled=true;$('#busyText').textContent='Membatalkan…';};
+  return{
+    set(t,p){$('#busyText').textContent=t;$('#busyBar').style.width=Math.round(p*100)+'%';},
+    cancelled:()=>cancelled,
+    done(){$('#busy').hidden=true;}
+  };
+}
+
+/* ---------------- Analytics store ---------------- */
+let events=store.get('events',[]);
+let evTimer=null;
+function track(type,extra){
+  events.push(Object.assign({t:Date.now(),type},extra||{}));
+  if(events.length>10000)events=events.slice(-10000);
+  clearTimeout(evTimer);
+  evTimer=setTimeout(()=>{store.set('events',events);if(currentTab==='analytics')renderAnalytics();},250);
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-track]');
+  if(el && !el.disabled) track('click',{label:el.dataset.track});
+},true);
+
+/* ---------------- History store ---------------- */
+let history=store.get('history',[]);
+function saveHistory(){
+  if(store.set('history',history)) return;
+  for(let i=history.length-1;i>=0;i--){
+    const h=history[i];
+    if(h.type==='bulk'&&h.items&&h.items.length){h.items=[];h.trimmed=true;if(store.set('history',history)){toast('Penyimpanan penuh: daftar item batch lama dikosongkan');return;}}
   }
+  history=history.slice(0,60);store.set('history',history);
+}
+function addHistory(e){history.unshift(e);if(history.length>300)history.length=300;saveHistory();updateBadges();}
+function updateBadges(){
+  $('#histCount').textContent=fmtN(history.length);
+  const cats=new Set();history.forEach(h=>{if(h.cat)cats.add(h.cat);(h.cats?Object.keys(h.cats):[]).forEach(c=>cats.add(c));});
+  $('#catList').innerHTML=[...cats].slice(0,50).map(c=>'<option value="'+esc(c)+'">').join('');
+}
 
-  document.getElementById('genBtn').addEventListener('click', generate);
+/* ---------------- QR core ---------------- */
+const LEVELS=['L','M','Q','H'];
+const CAP={L:2953,M:2331,Q:1663,H:1273};
+const enc=new TextEncoder();
+const bytesLen=s=>enc.encode(s).length;
+function planLevel(text,level){const n=bytesLen(text);for(let i=LEVELS.indexOf(level);i>=0;i--)if(n<=CAP[LEVELS[i]])return LEVELS[i];return null;}
+function buildQR(text,level){
+  for(let i=LEVELS.indexOf(level);i>=0;i--){
+    const L=LEVELS[i];if(bytesLen(text)>CAP[L])continue;
+    try{const q=qrcode(0,L);q.addData(text,'Byte');q.make();return{q,level:L};}catch(e){}
+  }
+  return null;
+}
+function fitText(ctx,t,max){if(ctx.measureText(t).width<=max)return t;while(t.length>1&&ctx.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…';}
+function drawQR(cv,q,o){
+  const n=q.getModuleCount(),m=o.margin,tot=n+2*m,S=o.size;
+  const lab=o.label||'';const lh=lab?Math.round(S*0.13):0;
+  cv.width=S;cv.height=S+lh;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle=o.light;ctx.fillRect(0,0,S,S+lh);
+  ctx.fillStyle=o.dark;const cell=S/tot;
+  for(let r=0;r<n;r++){const y0=Math.round((r+m)*cell),y1=Math.round((r+m+1)*cell);
+    for(let c=0;c<n;c++){if(q.isDark(r,c)){const x0=Math.round((c+m)*cell),x1=Math.round((c+m+1)*cell);ctx.fillRect(x0,y0,x1-x0,y1-y0);}}}
+  if(lab){
+    const fs=Math.max(10,Math.round(S*0.058));
+    ctx.font='700 '+fs+'px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(fitText(ctx,lab,S*0.9),S/2,S+lh*0.38);
+  }
+}
+function svgQR(q,o){
+  const n=q.getModuleCount(),m=o.margin,tot=n+2*m;
+  const lab=o.label||'';const lhu=lab?tot*0.13:0;const H=tot+lhu;
+  let d='';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+='M'+(c+m)+' '+(r+m)+'h1v1h-1z';
+  const txt=lab?'<text x="'+(tot/2)+'" y="'+(tot+lhu*0.38).toFixed(3)+'" text-anchor="middle" dominant-baseline="middle" font-family="Plus Jakarta Sans, system-ui, sans-serif" font-weight="700" font-size="'+(tot*0.058).toFixed(3)+'" fill="'+o.dark+'">'+esc(trunc(lab,42))+'</text>':'';
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+o.size+'" height="'+Math.round(o.size*H/tot)+'" viewBox="0 0 '+tot+' '+H.toFixed(3)+'" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="'+o.light+'"/><path d="'+d+'" fill="'+o.dark+'"/>'+txt+'</svg>';
+}
+function canvasBlob(cv){return new Promise(res=>cv.toBlob(b=>res(b),'image/png'));}
+function sanitizeName(s){
+  return String(s||'').normalize('NFC').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').replace(/\s+/g,'_').replace(/_+/g,'_').replace(/^[_.\-]+|[_.\-]+$/g,'').slice(0,120);
+}
+const isLink=s=>/https?:\/\//i.test(s);
 
-  document.getElementById('downloadBtn').addEventListener('click', function(){
-    const img = qrbox.querySelector('img');
-    const canvas = qrbox.querySelector('canvas');
-    let dataUrl = null;
-    if(img && img.src){ dataUrl = img.src; }
-    else if(canvas){ dataUrl = canvas.toDataURL('image/png'); }
-    if(!dataUrl){ generate(); return; }
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = 'qrcode-skala-stekom.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+/* ---------------- Theme & tabs ---------------- */
+function applyTheme(p){
+  if(p==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',p);
+  $$('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===p)));
+  store.set('theme',p);
+}
+let currentTab='single';
+function showTab(t){
+  currentTab=t;
+  $$('.tab').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
+  $$('.panel').forEach(p=>p.hidden=p.id!=='tab-'+t);
+  if(t==='history')renderHistory();
+  if(t==='analytics')renderAnalytics();
+  store.set('tab',t);
+}
+
+/* =========================================================
+   SINGLE MODE
+   ========================================================= */
+const S={};
+let singleSavedId=null,singleSig='',singleTimer=null,singleLast=null;
+function singleData(){
+  return{content:S.text.value.trim(),label:S.label.value.trim(),cat:S.cat.value.trim(),
+    opts:{size:+S.size.value,ecl:S.ecl.value,dark:S.dark.value,light:S.light.value,margin:+S.margin.value,showLabel:S.showLabel.checked}};
+}
+function sigOf(d){return JSON.stringify([d.content,d.label,d.cat,d.opts]);}
+function renderSingle(){
+  const d=singleData();const info=$('#sInfo');
+  $('#sLinkWarn').hidden=!isLink(d.content);
+  if(!d.content){$('#sSticker').hidden=true;$('#sEmpty').hidden=false;info.innerHTML='';setSingleState('empty');singleLast=null;return;}
+  const b=buildQR(d.content,d.opts.ecl);
+  if(!b){$('#sSticker').hidden=true;$('#sEmpty').hidden=false;$('#sEmpty').textContent='Data terlalu panjang untuk QR (maks 2.953 byte).';
+    info.innerHTML='<span class="pill err">'+fmtN(bytesLen(d.content))+' byte</span>';setSingleState('err');singleLast=null;return;}
+  $('#sEmpty').textContent='Ketik data di kolom kiri untuk melihat QR';
+  $('#sSticker').hidden=false;$('#sEmpty').hidden=true;
+  const o=Object.assign({},d.opts,{label:d.opts.showLabel?d.label:''});
+  drawQR($('#sCanvas'),b.q,o);
+  singleLast={q:b.q,o,level:b.level,d};
+  const ver=(b.q.getModuleCount()-17)/4;
+  info.innerHTML='<span class="pill">'+fmtN(bytesLen(d.content))+' byte</span><span class="pill">Versi '+ver+'</span><span class="pill'+(b.level!==d.opts.ecl?' warn':'')+'">Level '+b.level+'</span>'+
+    (b.level!==d.opts.ecl?'<span class="pill warn">Level turun dari '+d.opts.ecl+' karena data panjang</span>':'');
+  if(sigOf(d)!==singleSig)singleSavedId=null;
+  setSingleState(singleSavedId?'saved':'draft');
+}
+function setSingleState(s){
+  const el=$('#sState'),btn=$('#sSave');
+  const map={empty:['',''],err:['Tidak valid','err'],draft:['Belum disimpan',''],saved:['Tersimpan di riwayat','ok']};
+  el.textContent=map[s][0];el.className='pill '+map[s][1];el.hidden=!map[s][0];
+  btn.disabled=s==='empty'||s==='err'||s==='saved';
+  btn.textContent=s==='saved'?'Tersimpan di riwayat':'Simpan ke riwayat';
+  $('#sPng').disabled=$('#sSvg').disabled=$('#sCopy').disabled=(s==='empty'||s==='err');
+}
+function saveSingle(){
+  if(!singleLast)return null;
+  if(singleSavedId){const h=history.find(x=>x.id===singleSavedId);if(h)return h;}
+  const d=singleLast.d;
+  const e={id:uid(),type:'single',t:Date.now(),content:d.content,label:d.label,cat:d.cat,opts:d.opts,level:singleLast.level,clicks:0,downloads:0};
+  addHistory(e);singleSavedId=e.id;singleSig=sigOf(d);
+  track('generate',{mode:'single',n:1,cat:d.cat||''});
+  setSingleState('saved');
+  return e;
+}
+function singleFileBase(){const d=singleLast.d;return 'qr_'+(sanitizeName(d.label||d.content).slice(0,60)||'kode');}
+async function singleDownload(fmt){
+  if(!singleLast)return;
+  const e=saveSingle();
+  if(fmt==='png'){const b=await canvasBlob($('#sCanvas'));saveBlob(b,singleFileBase()+'.png');}
+  else saveBlob(new Blob([svgQR(singleLast.q,singleLast.o)],{type:'image/svg+xml'}),singleFileBase()+'.svg');
+  if(e){e.downloads=(e.downloads||0)+1;saveHistory();}
+  track('download',{mode:'single',fmt,cat:singleLast.d.cat||''});
+}
+async function singleCopy(){
+  if(!singleLast)return;
+  try{
+    const b=await canvasBlob($('#sCanvas'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);
+    toast('Gambar QR disalin');track('copy',{mode:'single',what:'image'});
+  }catch(err){
+    try{await navigator.clipboard.writeText(singleLast.d.content);toast('Browser tidak mendukung salin gambar; teks isi QR disalin');track('copy',{mode:'single',what:'text'});}
+    catch(e2){toast('Tidak bisa menyalin di browser ini','err');}
+  }
+}
+function loadSingle(e){
+  S.text.value=e.content;S.label.value=e.label||'';S.cat.value=e.cat||'';
+  const o=e.opts||{};
+  if(o.size)S.size.value=o.size;if(o.ecl)S.ecl.value=o.ecl;if(o.dark)S.dark.value=o.dark;if(o.light)S.light.value=o.light;
+  if(o.margin!=null)S.margin.value=o.margin;S.showLabel.checked=o.showLabel!==false;
+  singleSavedId=e.id;singleSig=sigOf(singleData());
+  showTab('single');renderSingle();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =========================================================
+   SCHEMA (format pakem, bisa dikustom)
+   ========================================================= */
+const ROLE={
+  no:{label:'No',desc:'Nomor urut, hanya referensi visual.'},
+  id:{label:'ID',desc:'ID unik. Dipakai untuk nama file; menjadi isi QR bila Data_QR kosong.',core:true},
+  nama:{label:'Nama',desc:'Label tambahan; tampil di preview dan bisa dicetak di bawah QR.'},
+  kategori:{label:'Kategori',desc:'Pengelompokan, mis. Mahasiswa, Aset, Ruangan.'},
+  data:{label:'Data_QR',desc:'Isi persis yang di-encode ke QR. Jika kosong, memakai ID.',core:true},
+  catatan:{label:'Catatan',desc:'Info tambahan; tidak ikut di-encode, hanya tampil di preview.'},
+  custom:{label:'Kustom',desc:'Kolom tambahan; bisa dipakai sebagai placeholder di pola.'}
+};
+const ALIAS={
+  no:['no','nomor','no.','nourut','urut'],
+  id:['id','kode','nim','nip','nik','idunik','kodeaset'],
+  nama:['nama','name','namalengkap'],
+  kategori:['kategori','category','jenis','kelompok'],
+  data:['dataqr','isiqr','qr','qrdata','data'],
+  catatan:['catatan','keterangan','note','notes','ket']
+};
+function mk(header,role,required,example){return{key:role==='custom'?'c_'+uid():role,header,role,required:!!required,example:example||''};}
+function pakemCols(o){o=o||{};return[
+  mk('No','no',false,'1'),mk('ID','id',true,o.id||'MHS-2024001'),mk('Nama','nama',false,o.nama||'Budi Santoso'),
+  mk('Kategori','kategori',false,o.kat||'Mahasiswa'),mk('Data_QR','data',true,o.data||''),mk('Catatan','catatan',false,o.cat||'')];}
+const PRESETS={
+  standar:()=>({preset:'standar',cols:pakemCols({data:'MHS-2024001|TI|2024',cat:'Kartu baru'}),source:'column',pattern:'{ID}|{Kategori}',fname:'{ID}_{Nama}'}),
+  presensi:()=>({preset:'presensi',cols:[...pakemCols({data:'',cat:'Semester ganjil'}),mk('Prodi','custom',true,'Teknik Informatika'),mk('Angkatan','custom',false,'2024')],source:'pattern',pattern:'{ID}|{Prodi}|{Angkatan}',fname:'{ID}_{Nama}'}),
+  aset:()=>({preset:'aset',cols:[...pakemCols({id:'AST-0001',nama:'Proyektor Epson',kat:'Aset',data:''}),mk('Lokasi','custom',true,'Ruang B-201'),mk('Tahun_Perolehan','custom',false,'2023')],source:'pattern',pattern:'AST:{ID};LOK:{Lokasi}',fname:'{Kategori}_{ID}'}),
+  tiket:()=>({preset:'tiket',cols:[...pakemCols({id:'TKT-0001',nama:'Siti Aminah',kat:'Reguler',data:''}),mk('Acara','custom',true,'Seminar Nasional'),mk('Kursi','custom',false,'A-12')],source:'pattern',pattern:'TKT|{ID}|{Acara}|{Kursi}',fname:'{ID}_{Kursi}'})
+};
+let schema=store.get('schema',null);
+if(!schema||!Array.isArray(schema.cols)||!schema.cols.some(c=>c.role==='id'))schema=PRESETS.standar();
+
+const roleKey=role=>{const c=schema.cols.find(c=>c.role===role);return c?c.key:null;};
+const hdrNorm=h=>String(h||'').toLowerCase().replace(/[\s_\-.]/g,'');
+function keyByHeader(name){const n=String(name).trim().toLowerCase();const c=schema.cols.find(c=>c.header.trim().toLowerCase()===n);return c?c.key:null;}
+function fillPattern(p,r){
+  let filled=false;
+  const text=String(p||'').replace(/\{([^{}]+)\}/g,(m,name)=>{
+    const nm=name.trim();
+    if(nm==='#'){return String(r.n);}
+    const k=keyByHeader(nm);if(!k)return '';
+    const v=r.v[k]||'';if(v)filled=true;return v;
+  });
+  return{text,filled};
+}
+function unknownPlaceholders(p){const out=[];String(p||'').replace(/\{([^{}]+)\}/g,(m,n)=>{n=n.trim();if(n!=='#'&&!keyByHeader(n))out.push('{'+n+'}');return m;});return out;}
+
+function persistSchema(){store.set('schema',schema);}
+let lastPatternInput=null;
+function renderSchema(){
+  const n=schema.cols.length;
+  $('#schemaBody').innerHTML=schema.cols.map((c,i)=>{
+    const core=ROLE[c.role].core;
+    return '<tr data-i="'+i+'">'+
+      '<td class="ord"><button class="icon-btn" data-act="up" aria-label="Naikkan" '+(i===0?'disabled':'')+'>'+ic('up')+'</button> <button class="icon-btn" data-act="down" aria-label="Turunkan" '+(i===n-1?'disabled':'')+'>'+ic('down')+'</button></td>'+
+      '<td><input class="in hdr" data-f="header" value="'+esc(c.header)+'" maxlength="40" aria-label="Header kolom"></td>'+
+      '<td><span class="role'+(core?' core':c.role==='custom'?' custom':'')+'" title="'+esc(ROLE[c.role].desc)+'">'+ROLE[c.role].label+'</span></td>'+
+      '<td class="c">'+(core?'<span class="lock" title="Minimal salah satu dari ID atau Data_QR harus terisi">inti</span>':c.role==='no'?'<span class="lock">—</span>':'<input type="checkbox" data-f="required" '+(c.required?'checked':'')+' aria-label="Wajib">')+'</td>'+
+      '<td><input class="in mono" data-f="example" value="'+esc(c.example)+'" aria-label="Contoh isi"></td>'+
+      '<td>'+(core?'':'<button class="icon-btn danger" data-act="del" aria-label="Hapus kolom" data-track="Skema: Hapus kolom">'+ic('trash')+'</button>')+'</td></tr>';
+  }).join('');
+  $('#qrSource').value=schema.source;$('#qrPattern').value=schema.pattern||'';$('#fnPattern').value=schema.fname||'';
+  $('#preset').value=schema.preset&&PRESETS[schema.preset]?schema.preset:'custom';
+  $('#preset').querySelector('[value=custom]').hidden=$('#preset').value!=='custom';
+  renderChips();checkSchema();
+}
+function renderChips(){
+  $('#chips').innerHTML=schema.cols.map(c=>'<button class="chip" type="button" data-ph="{'+esc(c.header)+'}">{'+esc(c.header)+'}</button>').join('')+
+    '<button class="chip" type="button" data-ph="{#}" title="Nomor baris Excel">{#}</button>';
+}
+function checkSchema(){
+  const msgs=[];const seen=new Map();
+  $$('#schemaBody input.hdr').forEach((inp,i)=>{
+    const h=inp.value.trim();let bad=false;
+    if(!h){bad=true;msgs.push('Header baris '+(i+1)+' kosong.');}
+    else if(/[{}]/.test(h)){bad=true;msgs.push('Header "'+h+'" tidak boleh berisi { atau }.');}
+    else{const k=h.toLowerCase();if(seen.has(k)){bad=true;msgs.push('Header "'+h+'" dipakai lebih dari sekali.');}seen.set(k,1);}
+    inp.classList.toggle('invalid',bad);
+  });
+  const up=unknownPlaceholders(schema.source==='pattern'?schema.pattern:'').concat(unknownPlaceholders(schema.fname));
+  if(up.length)msgs.push('Placeholder tidak dikenal: '+[...new Set(up)].join(', ')+' — akan dianggap kosong.');
+  if(schema.source==='pattern'&&!/\{[^{}]+\}/.test(schema.pattern||''))msgs.push('Pola isi QR belum berisi placeholder, sehingga semua QR akan berisi teks yang sama.');
+  const el=$('#schemaMsg');el.hidden=!msgs.length;el.innerHTML=msgs.map(esc).join('<br>');
+  $('#qrPattern').disabled=schema.source!=='pattern';
+  $('#qrPatternFld').style.opacity=schema.source==='pattern'?1:.55;
+  renderPatternExample();
+}
+function exampleRow(i){
+  const r={n:i+1,v:{}};
+  schema.cols.forEach(c=>{r.v[c.key]=exampleValue(c,i);});
+  return r;
+}
+const SAMPLE_NAMES=['Budi Santoso','Siti Aminah','Dewi Lestari','Agus Prasetyo','Rina Wulandari'];
+function exampleValue(c,i){
+  if(c.role==='no')return String(i+1);
+  let v=String(c.example||'');
+  if(c.role==='nama'&&(!v||SAMPLE_NAMES.includes(v)))return i===0&&v?v:SAMPLE_NAMES[i%SAMPLE_NAMES.length];
+  if(!v)return '';
+  if(i===0)return v;
+  const m=v.match(/^(.*?)(\d+)$/);
+  if(m&&(c.role==='id'||c.role==='data'||/^\D*\d+$/.test(v)&&c.role!=='custom')){const num=String(+m[2]+i).padStart(m[2].length,'0');return m[1]+num;}
+  if(c.role==='data'){const idc=schema.cols.find(x=>x.role==='id');return v;}
+  return v;
+}
+function renderPatternExample(){
+  const r=exampleRow(0);
+  const content=computeContent(r).content||'(kosong)';
+  const fn=(sanitizeName(fillPattern(schema.fname||'{ID}',r).text)||'baris_1')+'.png';
+  $('#patternExample').innerHTML='<div>Contoh isi QR baris pertama: <code>'+esc(content)+'</code></div><div>Contoh nama file: <code>'+esc(fn)+'</code></div>';
+}
+function schemaChanged(opts){
+  persistSchema();
+  if(!opts||!opts.noRender)renderSchema();else{renderChips();checkSchema();}
+  if(fileState)renderMapping();
+  if(rows.length){validateAll();renderPreview();}
+}
+function renamePlaceholders(oldH,newH){
+  if(!oldH||oldH===newH)return;
+  const re=new RegExp('\\{\\s*'+oldH.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*\\}','gi');
+  schema.pattern=(schema.pattern||'').replace(re,'{'+newH+'}');
+  schema.fname=(schema.fname||'').replace(re,'{'+newH+'}');
+  $('#qrPattern').value=schema.pattern;$('#fnPattern').value=schema.fname;
+}
+function markCustom(){schema.preset='custom';$('#preset').querySelector('[value=custom]').hidden=false;$('#preset').value='custom';}
+
+function downloadTemplate(){
+  const cols=schema.cols;
+  const aoa=[cols.map(c=>c.header)];
+  for(let i=0;i<3;i++)aoa.push(cols.map(c=>exampleValue(c,i)));
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  // semua sel sebagai teks agar nol di depan (mis. 00123) tidak hilang
+  for(let r=1;r<=3;r++)for(let c=0;c<cols.length;c++){const a=XLSX.utils.encode_cell({r,c});if(ws[a]){ws[a].t='s';ws[a].z='@';}}
+  ws['!cols']=cols.map(c=>({wch:Math.min(40,Math.max(10,c.header.length+2,String(c.example).length+4))}));
+  const guide=[
+    ['Petunjuk pengisian template QR bulk'],[],
+    ['Header di sheet "Data" harus sama persis dan urutannya tetap.'],
+    ['Setiap baris menjadi satu QR. Baris yang ID dan Data_QR-nya kosong akan dilewati.'],
+    ['Isikan data mentah (teks/ID/kode), bukan link.'],[],
+    ['Kolom','Peran','Wajib','Keterangan','Contoh']
+  ];
+  cols.forEach(c=>guide.push([c.header,ROLE[c.role].label,ROLE[c.role].core?'Inti (ID atau Data_QR minimal satu)':c.required?'Ya':'Tidak',ROLE[c.role].desc,c.example||'']));
+  guide.push([],['Sumber isi QR',schema.source==='pattern'?'Pola: '+schema.pattern+' (jika semua placeholder kosong → Data_QR → ID)':'Kolom Data_QR (jika kosong → ID)']);
+  guide.push(['Pola nama file',schema.fname||'{ID}']);
+  const wg=XLSX.utils.aoa_to_sheet(guide);wg['!cols']=[{wch:22},{wch:12},{wch:30},{wch:60},{wch:24}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Data');XLSX.utils.book_append_sheet(wb,wg,'Petunjuk');
+  XLSX.writeFile(wb,'template-qr-bulk'+(schema.preset&&schema.preset!=='standar'?'-'+schema.preset:'')+'.xlsx');
+  track('template_download',{preset:schema.preset||'custom',cols:cols.length});
+  toast('Template diunduh');
+}
+
+/* =========================================================
+   FILE IMPORT & MAPPING
+   ========================================================= */
+let fileState=null; // {name, sheet, headers, body:[{row,arr}]}
+let mapping={};    // schema key -> header index (-1 = none)
+function exampleTableHtml(){
+  const r0=exampleRow(0);
+  return '<div class="table-wrap" style="margin-top:8px"><table><thead><tr>'+schema.cols.map(c=>'<th>'+esc(c.header)+'</th>').join('')+'</tr></thead><tbody><tr>'+
+    schema.cols.map(c=>'<td class="mono">'+esc(r0.v[c.key])+'</td>').join('')+'</tr></tbody></table></div>';
+}
+async function fileError(msg){
+  const v=await modal({title:'File tidak bisa dibaca',body:'<p>'+esc(msg)+'</p><p>Format yang benar (baris pertama berisi header):</p>'+exampleTableHtml(),
+    buttons:[{label:'Tutup',value:null},{label:'Download template Excel',value:'tpl',primary:true,track:'Bulk: Download template (dari error)'}],wide:true});
+  if(v==='tpl')downloadTemplate();
+}
+async function readFile(file){
+  if(!file)return;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext))return fileError('Format ".'+ext+'" tidak didukung. Gunakan .xlsx, .xls, atau .csv.');
+  let wb;
+  try{
+    if(ext==='csv'){const txt=(await file.text()).replace(/^\uFEFF/,'');wb=XLSX.read(txt,{type:'string'});}
+    else wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+  }catch(e){return fileError('File rusak atau bukan spreadsheet yang valid ('+e.message+').');}
+  const sn=wb.SheetNames.find(n=>n.trim().toLowerCase()==='data')||wb.SheetNames[0];
+  const ws=wb.Sheets[sn];
+  if(!ws||!ws['!ref'])return fileError('File kosong: sheet "'+(sn||'-')+'" tidak berisi data.');
+  const start=XLSX.utils.decode_range(ws['!ref']).s.r;
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:true});
+  const hi=aoa.findIndex(r=>r.some(c=>String(c).trim()!==''));
+  if(hi<0)return fileError('File kosong: tidak ada header maupun data.');
+  const headers=aoa[hi].map(h=>String(h).trim());
+  const body=[];
+  for(let i=hi+1;i<aoa.length;i++){const arr=aoa[i];if(arr.some(c=>String(c).trim()!==''))body.push({row:start+i+1,arr});}
+  if(!body.length)return fileError('Header ditemukan, tetapi tidak ada baris data di bawahnya.');
+  fileState={name:file.name,sheet:sn,headers,body,size:file.size};
+  track('import',{n:body.length,ext});
+  autoMap();renderMapping();
+  $('#fileInfo').hidden=false;
+  $('#fileInfo').innerHTML='<span class="pill ok">'+esc(file.name)+'</span><span class="pill">Sheet: '+esc(sn)+'</span><span class="pill">'+fmtN(body.length)+' baris data</span><span class="pill">'+fmtBytes(file.size)+'</span>';
+  if(coreMapped()){applyMapping();document.getElementById('step3').scrollIntoView({behavior:'smooth',block:'start'});}
+  else{toast('Cocokkan kolom ID atau Data_QR terlebih dahulu','err');}
+}
+function autoMap(){
+  mapping={};const used=new Set();const H=fileState.headers.map(hdrNorm);
+  schema.cols.forEach(c=>{let idx=H.findIndex((h,i)=>!used.has(i)&&h===hdrNorm(c.header));mapping[c.key]=idx;if(idx>=0)used.add(idx);});
+  schema.cols.forEach(c=>{
+    if(mapping[c.key]>=0||!ALIAS[c.role])return;
+    const idx=H.findIndex((h,i)=>!used.has(i)&&ALIAS[c.role].includes(h));
+    if(idx>=0){mapping[c.key]=idx;used.add(idx);}
+  });
+}
+const coreMapped=()=>['id','data'].some(r=>{const k=roleKey(r);return k&&mapping[k]>=0;});
+function renderMapping(){
+  if(!fileState)return;
+  $('#mapBox').hidden=false;
+  schema.cols.forEach(c=>{if(!(c.key in mapping))mapping[c.key]=-1;});
+  const opts=fileState.headers.map((h,i)=>({h,i}));
+  $('#mapGrid').innerHTML=schema.cols.map(c=>{
+    const idx=mapping[c.key];const miss=idx<0;const bad=miss&&(ROLE[c.role].core||c.required);
+    return '<div class="map-item'+(bad?' bad':miss?' miss':'')+'"><label><span>'+esc(c.header)+'</span><span class="hint">'+(idx>=0?'cocok':bad?'wajib':'tidak ada')+'</span></label>'+
+      '<select class="in sm" style="width:100%" data-key="'+c.key+'"><option value="-1">— tidak ada di file —</option>'+
+      opts.map(o=>'<option value="'+o.i+'"'+(o.i===idx?' selected':'')+'>'+esc(o.h||'(kolom '+(o.i+1)+' tanpa header)')+'</option>').join('')+'</select></div>';
+  }).join('');
+  const usedIdx=new Set(Object.values(mapping).filter(v=>v>=0));
+  const extra=fileState.headers.map((h,i)=>({h,i})).filter(o=>!usedIdx.has(o.i)&&o.h);
+  $('#extraCols').innerHTML=extra.length?'<div class="alert info" style="margin-top:10px">Kolom di file yang belum masuk skema: '+extra.map(o=>'<code class="k">'+esc(o.h)+'</code>').join(' ')+
+    ' <button class="btn ghost sm" id="addExtra" data-track="Bulk: Tambah kolom file ke skema" style="margin-left:6px">Tambahkan ke skema</button></div>':'';
+  const mm=$('#mapMsg');
+  if(!coreMapped())mm.innerHTML='<div class="alert err">Kolom ID maupun Data_QR tidak ditemukan di file. Pilih kolom yang sesuai di bawah, lalu klik "Terapkan pemetaan ulang".</div>';
+  else{const missReq=schema.cols.filter(c=>c.required&&!ROLE[c.role].core&&mapping[c.key]<0);
+    mm.innerHTML=missReq.length?'<div class="alert warn">Kolom wajib tidak ada di file: '+missReq.map(c=>esc(c.header)).join(', ')+'. Barisnya akan ditandai error sampai diisi di tabel preview.</div>':'';}
+}
+function applyMapping(){
+  if(!fileState)return;
+  if(!coreMapped())return fileError('Minimal kolom ID atau Data_QR harus dipetakan ke kolom di file.');
+  const dataKey=roleKey('data');
+  rows=fileState.body.map(b=>{
+    const v={};
+    schema.cols.forEach(c=>{
+      const idx=mapping[c.key];let val=idx>=0?String(b.arr[idx]==null?'':b.arr[idx]):'';
+      val=val.replace(/\u00a0/g,' ').trim();
+      if(c.key!==dataKey)val=val.replace(/[ \t]{2,}/g,' ');
+      v[c.key]=val;
+    });
+    return{n:b.row,v,link:null};
+  });
+  pv.page=0;pv.filter='all';pv.q='';$('#pvSearch').value='';
+  $$('.fchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='all')));
+  validateAll();renderPreview();resetResult();updateSteps();
+}
+
+/* =========================================================
+   ROWS, VALIDATION & PREVIEW
+   ========================================================= */
+let rows=[];
+const pv={filter:'all',q:'',page:0,size:100};
+const val=(r,role)=>{const k=roleKey(role);return k?(r.v[k]||''):'';};
+function computeContent(r){
+  const id=val(r,'id'),data=val(r,'data');let content='',src='';
+  if(schema.source==='pattern'&&(schema.pattern||'').trim()){const f=fillPattern(schema.pattern,r);if(f.filled){content=f.text.trim();src='pola';}}
+  if(!content){if(data){content=data;src='Data_QR';}else if(id){content=id;src='ID';}}
+  return{content,src,id,data};
+}
+function validateAll(){
+  const ecl=$('#bEcl').value;const idK=roleKey('id');
+  const cnt=new Map();rows.forEach(r=>{const id=idK?r.v[idK]:'';if(id)cnt.set(id,(cnt.get(id)||0)+1);});
+  const req=schema.cols.filter(c=>c.required&&!ROLE[c.role].core&&c.role!=='no');
+  rows.forEach((r,i)=>{
+    r._i=i;const msgs=[];
+    const cc=computeContent(r);r.content=cc.content;
+    if(!cc.content)msgs.push({lv:'err',t:'ID dan Data_QR kosong — baris dilewati'});
+    else if(cc.src==='ID')msgs.push({lv:'info',t:'Data_QR kosong, isi QR memakai ID'});
+    else if(schema.source==='pattern'&&cc.src!=='pola')msgs.push({lv:'info',t:'Pola kosong, memakai '+cc.src});
+    req.forEach(c=>{if(!(r.v[c.key]||''))msgs.push({lv:'err',t:'Kolom wajib "'+c.header+'" kosong'});});
+    if(cc.id&&cnt.get(cc.id)>1)msgs.push({lv:'warn',t:'ID duplikat ('+cnt.get(cc.id)+'×)'});
+    if(cc.content&&isLink(cc.content)){
+      if(!r.link)r.link='pending';
+      if(r.link==='pending')msgs.push({lv:'warn',t:'Terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link. Lanjutkan?'});
+      else if(r.link==='allow')msgs.push({lv:'info',t:'Link diizinkan'});
+      else msgs.push({lv:'err',t:'Link dibatalkan — baris dilewati'});
+    }else r.link=null;
+    r.level=null;
+    if(cc.content){
+      const lv=planLevel(cc.content,ecl);
+      if(!lv)msgs.push({lv:'err',t:'Data terlalu panjang ('+fmtN(bytesLen(cc.content))+' byte, maks 2.953)'});
+      else{r.level=lv;if(lv!==ecl)msgs.push({lv:'warn',t:'Level koreksi otomatis turun '+ecl+' → '+lv});}
+    }
+    r.fname=sanitizeName(fillPattern(schema.fname||'{ID}',r).text)||('baris_'+r.n);
+    r.msgs=msgs;r.status=msgs.some(m=>m.lv==='err')?'err':msgs.some(m=>m.lv==='warn')?'warn':'ok';
+  });
+  updateCounts();
+}
+function updateCounts(){
+  const c={all:rows.length,ok:0,warn:0,err:0};rows.forEach(r=>c[r.status]++);
+  ['all','ok','warn','err'].forEach(k=>$('#c-'+k).textContent=fmtN(c[k]));
+  const pend=rows.filter(r=>r.link==='pending').length;
+  const lb=$('#linkBar');lb.hidden=!pend;
+  if(pend)lb.innerHTML='<b>'+fmtN(pend)+' baris</b> terdeteksi kemungkinan link. Tool ini dikhususkan untuk QR non-link. Lanjutkan? '+
+    '<span class="btn-row" style="display:inline-flex;margin:6px 0 0"><button class="btn ghost sm" data-linkall="allow" data-track="Preview: Izinkan semua link">Lanjutkan semua</button><button class="btn ghost sm" data-linkall="skip" data-track="Preview: Lewati semua link">Batalkan semua</button></span>';
+  const valid=c.all-c.err;
+  $('#genAll').disabled=!valid;
+  $('#genAll').textContent=valid?'Generate semua ('+fmtN(valid)+' QR)':'Generate semua';
+}
+function filteredRows(){
+  const q=pv.q.toLowerCase();
+  return rows.filter(r=>(pv.filter==='all'||r.status===pv.filter)&&(!q||r.content.toLowerCase().includes(q)||Object.values(r.v).some(x=>x.toLowerCase().includes(q))));
+}
+function statusHtml(r){
+  const lbl={ok:'OK',warn:'Warning',err:'Error'}[r.status];
+  let h='<span class="pill '+r.status+'">'+lbl+'</span>';
+  if(r.msgs.length)h+='<ul>'+r.msgs.map(m=>'<li class="'+m.lv+'">'+esc(m.t)+'</li>').join('')+'</ul>';
+  if(r.link==='pending')h+='<div class="lk"><button class="btn ghost sm" data-act="lallow" data-track="Preview: Izinkan link baris">Lanjut</button><button class="btn ghost sm" data-act="lskip" data-track="Preview: Batalkan link baris">Batal</button></div>';
+  else if(r.link==='allow')h+='<div class="lk"><button class="btn ghost sm" data-act="lskip">Batalkan link</button></div>';
+  else if(r.link==='skip')h+='<div class="lk"><button class="btn ghost sm" data-act="lallow">Izinkan link</button></div>';
+  return h;
+}
+function renderPreview(){
+  const has=rows.length>0;$('#pvEmpty').hidden=has;$('#pvBox').hidden=!has;
+  if(!has)return;
+  const cols=schema.cols;
+  $('#pvTable thead').innerHTML='<tr><th class="sticky">Baris</th>'+cols.map(c=>'<th>'+esc(c.header)+(ROLE[c.role].core||c.required?' *':'')+'</th>').join('')+'<th>Isi QR (final)</th><th>Nama file</th><th>Status</th><th></th></tr>';
+  const list=filteredRows();const pages=Math.max(1,Math.ceil(list.length/pv.size));
+  if(pv.page>=pages)pv.page=pages-1;
+  const slice=list.slice(pv.page*pv.size,(pv.page+1)*pv.size);
+  $('#pvTable tbody').innerHTML=slice.length?slice.map(r=>'<tr data-i="'+r._i+'" class="st-'+r.status+'"><td class="num sticky">'+r.n+'</td>'+
+    cols.map(c=>'<td contenteditable="true" spellcheck="false" data-k="'+c.key+'"'+(c.role==='data'?' class="mono"':'')+'>'+esc(r.v[c.key]||'')+'</td>').join('')+
+    '<td class="qc mono" title="'+esc(r.content)+'">'+esc(trunc(r.content,70))+'</td><td class="qc mono">'+esc(r.fname)+'</td><td class="st">'+statusHtml(r)+'</td>'+
+    '<td><button class="icon-btn danger" data-act="del" aria-label="Hapus baris" data-track="Preview: Hapus baris">'+ic('trash')+'</button></td></tr>').join('')
+    :'<tr><td colspan="'+(cols.length+5)+'" class="hint" style="text-align:center;padding:24px">Tidak ada baris yang cocok dengan filter.</td></tr>';
+  $('#pgInfo').textContent='Menampilkan '+(list.length?fmtN(pv.page*pv.size+1)+'–'+fmtN(pv.page*pv.size+slice.length):0)+' dari '+fmtN(list.length)+' baris';
+  $('#pgPrev').disabled=pv.page===0;$('#pgNext').disabled=pv.page>=pages-1;
+}
+function updateVisible(){
+  $$('#pvTable tbody tr[data-i]').forEach(tr=>{
+    const r=rows[+tr.dataset.i];if(!r)return;
+    tr.className='st-'+r.status;
+    const q=tr.querySelectorAll('td.qc');q[0].textContent=trunc(r.content,70);q[0].title=r.content;q[1].textContent=r.fname;
+    tr.querySelector('td.st').innerHTML=statusHtml(r);
+  });
+}
+
+/* =========================================================
+   GENERATE & ZIP
+   ========================================================= */
+let running=false,cancelReq=false,lastZip=null;
+function resetResult(){lastZip=null;$('#dlZip').hidden=true;$('#summary').innerHTML='';$('#prog').hidden=true;}
+function bulkOpts(){return{size:+$('#bSize').value,ecl:$('#bEcl').value,dark:$('#bDark').value,light:$('#bLight').value,margin:+$('#bMargin').value,labelMode:$('#bLabel').value,format:$('#bFormat').value};}
+function labelFor(r,mode){const id=val(r,'id'),nm=val(r,'nama');
+  if(mode==='nama')return nm;if(mode==='id')return id;if(mode==='idnama')return[id,nm].filter(Boolean).join(' - ');return '';}
+function uniqueName(base,used){
+  const k=base.toLowerCase();if(!used.has(k)){used.set(k,1);return base;}
+  let i=used.get(k)+1;while(used.has((base+'_'+i).toLowerCase()))i++;
+  used.set(k,i);used.set((base+'_'+i).toLowerCase(),1);return base+'_'+i;
+}
+function benchmark(items,opts){
+  const cv=document.createElement('canvas');const t0=performance.now();let n=0;
+  for(const it of items.slice(0,12)){const b=buildQR(it.content,it.req);if(!b)continue;drawQR(cv,b.q,{size:opts.size,dark:opts.dark,light:opts.light,margin:opts.margin,label:it.label});cv.toDataURL('image/png');n++;}
+  return n?(performance.now()-t0)/n:10;
+}
+const csvCell=v=>{v=String(v==null?'':v);return /[",\r\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+function buildCsv(results,skipped){
+  const all=[];
+  results.forEach(r=>all.push([r.n,r.id,r.nama,r.kat,r.content,r.ok?r.levelUsed:'',r.ok?r.files.join(' | '):'',r.ok?'BERHASIL':'GAGAL',r.ok?(r.levelUsed!==r.req?'Level koreksi turun '+r.req+' -> '+r.levelUsed:''):r.reason]));
+  skipped.forEach(s=>all.push([s.n,s.id,s.nama,s.kat,s.content,'','','DILEWATI',s.reason]));
+  all.sort((a,b)=>(+a[0]||0)-(+b[0]||0));
+  return [['Baris_Excel','ID','Nama','Kategori','Data_QR','Level_Koreksi','Nama_File','Status','Keterangan'],...all].map(r=>r.map(csvCell).join(',')).join('\r\n');
+}
+async function runZip(items,skipped,opts,prog){
+  const zip=new JSZip();const cv=document.createElement('canvas');const results=[];const CH=20;
+  for(let i=0;i<items.length;i+=CH){
+    if(prog.cancelled())throw new Error('CANCELLED');
+    const chunk=items.slice(i,i+CH);
+    for(const it of chunk){
+      try{
+        const b=buildQR(it.content,it.req);
+        if(!b)throw new Error('Data terlalu panjang untuk QR');
+        const o={size:opts.size,dark:opts.dark,light:opts.light,margin:opts.margin,label:it.label};
+        const files=[];
+        if(opts.format!=='svg'){
+          drawQR(cv,b.q,o);const blob=await canvasBlob(cv);
+          if(blob)zip.file('qr/'+it.fname+'.png',blob,{compression:'STORE'});
+          else zip.file('qr/'+it.fname+'.png',cv.toDataURL('image/png').split(',')[1],{base64:true,compression:'STORE'});
+          files.push(it.fname+'.png');
+        }
+        if(opts.format!=='png'){zip.file('qr/'+it.fname+'.svg',svgQR(b.q,o));files.push(it.fname+'.svg');}
+        results.push(Object.assign({},it,{ok:true,levelUsed:b.level,files}));
+      }catch(e){results.push(Object.assign({},it,{ok:false,reason:e.message||'Gagal membuat QR'}));}
+    }
+    const done=Math.min(i+CH,items.length);
+    prog.set('Memproses '+fmtN(done)+'/'+fmtN(items.length)+'…',done/items.length*0.9);
+    await sleep0();
+  }
+  zip.file('ringkasan.csv','\uFEFF'+buildCsv(results,skipped));
+  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}},m=>prog.set('Mengemas ZIP… '+Math.round(m.percent)+'%',0.9+m.percent/1000));
+  return{blob,results};
+}
+function inlineProg(){
+  $('#prog').hidden=false;$('#progBar').style.width='0%';$('#progText').textContent='Menyiapkan…';
+  return{set(t,p){$('#progText').textContent=t;$('#progBar').style.width=Math.round(p*100)+'%';},cancelled:()=>cancelReq};
+}
+async function generateAll(){
+  if(running)return;
+  if(!rows.length)return toast('Belum ada data untuk diproses','err');
+  validateAll();
+  const pend=rows.filter(r=>r.link==='pending');
+  if(pend.length){
+    const a=await modal({title:'Terdeteksi kemungkinan link',
+      body:'<p><b>'+fmtN(pend.length)+' baris</b> berisi <code class="k">http://</code> atau <code class="k">https://</code>. Tool ini dikhususkan untuk QR non-link. Lanjutkan?</p><ul class="mini">'+
+        pend.slice(0,5).map(r=>'<li>Baris '+r.n+': <span class="mono">'+esc(trunc(r.content,60))+'</span></li>').join('')+(pend.length>5?'<li>dan '+fmtN(pend.length-5)+' lainnya</li>':'')+'</ul>',
+      buttons:[{label:'Tinjau per baris',value:'review'},{label:'Batalkan semua link',value:'skip',track:'Modal link: Batalkan semua'},{label:'Lanjutkan semua',value:'allow',primary:true,track:'Modal link: Lanjutkan semua'}]});
+    if(!a||a==='review'){pv.filter='warn';pv.page=0;$$('.fchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter==='warn')));renderPreview();$('#step3').scrollIntoView({behavior:'smooth'});return;}
+    pend.forEach(r=>r.link=a);validateAll();renderPreview();
+  }
+  const opts=bulkOpts();
+  const okRows=rows.filter(r=>r.status!=='err');
+  if(!okRows.length)return modal({title:'Tidak ada baris valid',body:'<p>Semua baris berstatus error. Perbaiki di tabel preview terlebih dahulu.</p>'});
+  const used=new Map();
+  const items=okRows.map(r=>({n:r.n,id:val(r,'id'),nama:val(r,'nama'),kat:val(r,'kategori'),content:r.content,req:opts.ecl,label:labelFor(r,opts.labelMode),fname:uniqueName(r.fname,used)}));
+  const skipped=rows.filter(r=>r.status==='err').map(r=>({n:r.n,id:val(r,'id'),nama:val(r,'nama'),kat:val(r,'kategori'),content:r.content,reason:r.msgs.filter(m=>m.lv==='err').map(m=>m.t).join('; ')}));
+  if(items.length>1000){
+    const per=benchmark(items,opts)*(opts.format==='both'?1.6:1)+0.8;
+    const go=await modal({title:'Batch besar',body:'<p>'+fmtN(items.length)+' QR akan dibuat. Estimasi waktu sekitar <b>'+fmtDur(per*items.length)+'</b>, tergantung kecepatan perangkat.</p><p>Biarkan tab ini tetap terbuka selama proses. Browser tetap responsif karena QR diproses 20 per batch.</p>',
+      buttons:[{label:'Batal',value:false},{label:'Mulai proses',value:true,primary:true,track:'Modal batch besar: Mulai'}]});
+    if(!go)return;
+  }
+  running=true;cancelReq=false;resetResult();
+  $('#genAll').disabled=true;$('#cancelRun').hidden=false;
+  const t0=performance.now();
+  try{
+    const {blob,results}=await runZip(items,skipped,opts,inlineProg());
+    const ok=results.filter(r=>r.ok);const failed=results.filter(r=>!r.ok);
+    const allSkipped=skipped.concat(failed.map(f=>({n:f.n,id:f.id,nama:f.nama,kat:f.kat,content:f.content,reason:f.reason})));
+    const name='qrcode-bulk-'+stamp()+'.zip';
+    lastZip={blob,name};
+    $('#progBar').style.width='100%';$('#progText').textContent='Selesai dalam '+fmtDur(performance.now()-t0)+' — '+fmtBytes(blob.size);
+    $('#cancelRun').hidden=true;
+    $('#dlZip').hidden=false;$('#dlZip').innerHTML=ic('dl')+'Download ZIP ('+fmtBytes(blob.size)+')';
+    renderSummary(rows.length,ok,allSkipped);
+    const cats={};ok.forEach(r=>{const k=r.kat||'(tanpa kategori)';cats[k]=(cats[k]||0)+1;});
+    addHistory({id:uid(),type:'bulk',t:Date.now(),file:fileState?fileState.name:'(data manual)',total:rows.length,success:ok.length,skippedN:allSkipped.length,
+      opts,cats,clicks:0,downloads:1,zipName:name,
+      items:ok.slice(0,5000).map(r=>({n:r.n,id:r.id,nm:r.nama,kt:r.kat,c:r.content,f:r.fname,lb:r.label,lv:r.levelUsed})),
+      skipped:allSkipped.slice(0,1000).map(s=>({n:s.n,id:s.id,nm:s.nama,kt:s.kat,c:s.content,r:s.reason})),trimmed:ok.length>5000});
+    track('bulk_generate',{mode:'bulk',n:ok.length,cats,fmt:opts.format});
+    saveBlob(blob,name);track('zip_download',{mode:'bulk',n:ok.length,fmt:opts.format,auto:true});
+    updateSteps();
+  }catch(e){
+    if(e.message==='CANCELLED'){$('#progText').textContent='Proses dibatalkan. Belum ada file yang dibuat.';toast('Proses dibatalkan');}
+    else{$('#progText').textContent='Gagal: '+e.message;toast('Gagal membuat ZIP: '+e.message,'err');}
+    $('#cancelRun').hidden=true;
+  }finally{running=false;updateCounts();}
+}
+function renderSummary(total,ok,skipped){
+  const down=ok.filter(r=>r.levelUsed!==r.req);
+  let h='<div class="kpis"><div class="kpi"><b>'+fmtN(total)+'</b><span>Total baris</span></div><div class="kpi ok"><b>'+fmtN(ok.length)+'</b><span>Berhasil</span></div>'+
+    '<div class="kpi err"><b>'+fmtN(skipped.length)+'</b><span>Dilewati</span></div><div class="kpi warn"><b>'+fmtN(down.length)+'</b><span>Level koreksi turun</span></div></div>';
+  if(skipped.length)h+='<details open><summary>Baris dilewati ('+fmtN(skipped.length)+')</summary><div class="table-wrap"><table><thead><tr><th>Baris</th><th>ID</th><th>Alasan</th></tr></thead><tbody>'+
+    skipped.slice(0,500).map(s=>'<tr><td class="num">'+s.n+'</td><td class="mono">'+esc(s.id||'—')+'</td><td>'+esc(s.reason)+'</td></tr>').join('')+'</tbody></table></div>'+(skipped.length>500?'<p class="hint">Daftar lengkap ada di ringkasan.csv.</p>':'')+'</details>';
+  if(down.length)h+='<details><summary>Catatan level koreksi ('+fmtN(down.length)+')</summary><div class="table-wrap"><table><thead><tr><th>Baris</th><th>ID</th><th>Level</th></tr></thead><tbody>'+
+    down.slice(0,500).map(r=>'<tr><td class="num">'+r.n+'</td><td class="mono">'+esc(r.id||'—')+'</td><td>'+r.req+' → '+r.levelUsed+'</td></tr>').join('')+'</tbody></table></div></details>';
+  h+='<p class="hint" style="margin-top:10px">ZIP berisi folder <code class="k">qr/</code> dan <code class="k">ringkasan.csv</code> untuk pencocokan dan audit. Batch ini juga tersimpan di Riwayat dan bisa dibuat ulang kapan saja.</p>';
+  $('#summary').innerHTML=h;
+}
+function updateSteps(){
+  const st={1:true,2:!!fileState||rows.length>0,3:rows.length>0,4:!!lastZip};
+  $$('#steps li').forEach(li=>li.classList.toggle('done',!!st[li.dataset.step]));
+  ['step2','step3','step4'].forEach((id,i)=>$('#'+id).classList.toggle('is-done',!!st[i+2]));
+}
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+const hv={q:'',type:'all',sort:'new'};
+function histItemsToRun(h){return(h.items||[]).map(it=>({n:it.n,id:it.id,nama:it.nm,kat:it.kt,content:it.c,req:(h.opts&&h.opts.ecl)||'H',label:it.lb,fname:it.f}));}
+function renderHistory(){
+  const q=hv.q.toLowerCase();
+  let list=history.filter(h=>(hv.type==='all'||h.type===hv.type)&&(!q||[h.content,h.label,h.cat,h.file,h.zipName,...Object.keys(h.cats||{})].some(x=>String(x||'').toLowerCase().includes(q))));
+  const sorters={new:(a,b)=>b.t-a.t,old:(a,b)=>a.t-b.t,clicks:(a,b)=>(b.clicks||0)-(a.clicks||0)||b.t-a.t,dl:(a,b)=>(b.downloads||0)-(a.downloads||0)||b.t-a.t};
+  list.sort(sorters[hv.sort]);
+  let bytes=0;try{bytes=(localStorage.getItem(LS+'history')||'').length+(localStorage.getItem(LS+'events')||'').length;}catch(e){}
+  $('#histStorage').textContent=fmtN(history.length)+' entri tersimpan, sekitar '+fmtBytes(bytes*2)+' di browser ini';
+  if(!list.length){$('#hList').innerHTML='<div class="empty-box">'+(history.length?'Tidak ada riwayat yang cocok dengan pencarian.':'Belum ada riwayat. Simpan QR di mode Single atau jalankan Generate di mode Bulk, dan hasilnya muncul di sini.')+'</div>';return;}
+  $('#hList').innerHTML=list.map(h=>{
+    const single=h.type==='single';
+    const title=single?(h.label||h.content):(h.file||'Batch bulk');
+    const meta=single?['<span class="pill">Single</span>',h.cat?'<span class="pill">'+esc(h.cat)+'</span>':'','<span>'+fmtTime(h.t)+'</span>','<span>Level '+(h.level||'-')+'</span>','<span>'+(h.opts?h.opts.size:'')+' px</span>'].join('')
+      :['<span class="pill">Bulk</span>','<span>'+fmtTime(h.t)+'</span>','<span>'+fmtN(h.success)+' berhasil</span>',h.skippedN?'<span>'+fmtN(h.skippedN)+' dilewati</span>':'','<span>'+String((h.opts&&h.opts.format)||'png').toUpperCase()+'</span>',
+        ...Object.keys(h.cats||{}).slice(0,3).map(c=>'<span class="pill">'+esc(c)+'</span>')].join('');
+    return '<article class="h-item" data-id="'+h.id+'">'+
+      '<button class="h-main" data-act="open" data-track="Riwayat: Buka '+(single?'single':'batch')+'" title="Buka">'+
+        (single?'<span class="h-thumb"><canvas width="58" height="58"></canvas></span>':'<span class="h-thumb bulk"><span><b>'+fmtN(h.success)+'</b><small>QR</small></span></span>')+
+        '<span class="h-body"><span class="h-title'+(single&&!h.label?' mono':'')+'">'+esc(trunc(title,90))+'</span>'+(single&&h.label?'<span class="hint mono">'+esc(trunc(h.content,80))+'</span>':'')+'<span class="h-meta">'+meta+'</span></span></button>'+
+      '<div class="h-side"><div class="h-stats"><span title="Berapa kali dibuka">'+ic('eye')+fmtN(h.clicks||0)+' dibuka</span><span title="Berapa kali diunduh">'+ic('dl')+fmtN(h.downloads||0)+' unduhan</span></div>'+
+      (single?'<button class="btn ghost sm" data-act="png" data-track="Riwayat: Unduh PNG">PNG</button><button class="btn ghost sm" data-act="svg" data-track="Riwayat: Unduh SVG">SVG</button>'
+        :'<button class="btn ghost sm" data-act="zip" data-track="Riwayat: Buat ulang ZIP"'+((h.items||[]).length?'':' disabled title="Daftar item tidak tersimpan"')+'>ZIP</button>')+
+      '<button class="icon-btn danger" data-act="del" aria-label="Hapus dari riwayat" data-track="Riwayat: Hapus entri">'+ic('trash')+'</button></div></article>';
+  }).join('');
+  $$('#hList .h-item').forEach(el=>{
+    const h=history.find(x=>x.id===el.dataset.id);const cv=el.querySelector('canvas');
+    if(h&&cv&&h.type==='single'){const b=buildQR(h.content,(h.opts&&h.opts.ecl)||'H');if(b)drawQR(cv,b.q,{size:58,dark:(h.opts&&h.opts.dark)||'#000',light:(h.opts&&h.opts.light)||'#fff',margin:1,label:''});}
+  });
+}
+async function histDownloadSingle(h,fmt){
+  const b=buildQR(h.content,h.opts.ecl);if(!b)return toast('Tidak bisa membuat ulang QR ini','err');
+  const o=Object.assign({},h.opts,{label:h.opts.showLabel!==false?h.label:''});
+  const base='qr_'+(sanitizeName(h.label||h.content).slice(0,60)||'kode');
+  if(fmt==='png'){const cv=document.createElement('canvas');drawQR(cv,b.q,o);saveBlob(await canvasBlob(cv),base+'.png');}
+  else saveBlob(new Blob([svgQR(b.q,o)],{type:'image/svg+xml'}),base+'.svg');
+  h.downloads=(h.downloads||0)+1;saveHistory();track('download',{mode:'history',fmt,cat:h.cat||''});renderHistory();
+}
+async function histRegenZip(h){
+  const items=histItemsToRun(h);if(!items.length)return toast('Daftar item batch ini tidak tersimpan','err');
+  const skipped=(h.skipped||[]).map(s=>({n:s.n,id:s.id,nama:s.nm,kat:s.kt,content:s.c,reason:s.r}));
+  const pg=busy('Membuat ulang ZIP ('+fmtN(items.length)+' QR)');
+  try{
+    const {blob}=await runZip(items,skipped,h.opts,pg);
+    saveBlob(blob,(h.zipName||'qrcode-bulk.zip').replace(/\.zip$/,'')+'-ulang.zip');
+    h.downloads=(h.downloads||0)+1;saveHistory();track('zip_download',{mode:'history',n:items.length,fmt:h.opts.format});
+    toast('ZIP dibuat ulang');
+  }catch(e){toast(e.message==='CANCELLED'?'Proses dibatalkan':'Gagal: '+e.message,e.message==='CANCELLED'?'':'err');}
+  finally{pg.done();if(currentTab==='history')renderHistory();}
+}
+async function openBulkDetail(h){
+  const items=h.items||[];
+  const tbl=list=>'<div class="table-wrap" style="max-height:48vh"><table><thead><tr><th>Baris</th><th>ID</th><th>Nama</th><th>Isi QR</th><th>File</th><th></th></tr></thead><tbody>'+
+    list.slice(0,300).map(it=>'<tr><td class="num">'+it.n+'</td><td class="mono">'+esc(it.id||'—')+'</td><td>'+esc(it.nm||'')+'</td><td class="mono">'+esc(trunc(it.c,50))+'</td><td class="mono">'+esc(it.f)+'</td><td><button class="btn ghost sm" data-png="'+items.indexOf(it)+'" data-track="Riwayat batch: Unduh PNG item">PNG</button></td></tr>').join('')+
+    '</tbody></table></div>'+(list.length>300?'<p class="hint">Menampilkan 300 dari '+fmtN(list.length)+' item. Gunakan pencarian untuk mempersempit.</p>':'');
+  const o=h.opts||{};
+  const body='<div class="kpis" style="margin-top:0"><div class="kpi"><b>'+fmtN(h.total)+'</b><span>Total baris</span></div><div class="kpi ok"><b>'+fmtN(h.success)+'</b><span>Berhasil</span></div><div class="kpi err"><b>'+fmtN(h.skippedN||0)+'</b><span>Dilewati</span></div></div>'+
+    '<p class="hint">'+esc(h.file)+', dibuat '+fmtTime(h.t)+'. Pengaturan: '+o.size+' px, level '+o.ecl+', '+String(o.format).toUpperCase()+', label '+({nama:'Nama',id:'ID',idnama:'ID + Nama',none:'disembunyikan'}[o.labelMode]||'-')+'.</p>'+
+    (h.trimmed?'<div class="alert warn">Sebagian daftar item tidak disimpan karena batas penyimpanan browser.</div>':'')+
+    (items.length?'<input class="in sm" id="bdSearch" type="search" placeholder="Cari ID, nama, isi…" style="width:100%;margin-bottom:8px"><div id="bdTable">'+tbl(items)+'</div>':'<div class="empty-box">Daftar item tidak tersedia.</div>');
+  const p=modal({title:'Detail batch',body,wide:true,buttons:[{label:'Tutup',value:null},{label:'Buat ulang ZIP',value:'zip',primary:true,track:'Riwayat batch: Buat ulang ZIP'}]});
+  const mb=$('#modalBody');
+  const s=$('#bdSearch');if(s)s.addEventListener('input',()=>{const q=s.value.toLowerCase();$('#bdTable').innerHTML=tbl(items.filter(it=>[it.id,it.nm,it.c,it.f,it.kt].some(x=>String(x||'').toLowerCase().includes(q))));});
+  mb.addEventListener('click',async e=>{
+    const b=e.target.closest('[data-png]');if(!b)return;
+    const it=items[+b.dataset.png];const r=buildQR(it.c,o.ecl);if(!r)return;
+    const cv=document.createElement('canvas');drawQR(cv,r.q,{size:o.size,dark:o.dark,light:o.light,margin:o.margin,label:it.lb});
+    saveBlob(await canvasBlob(cv),it.f+'.png');h.downloads=(h.downloads||0)+1;saveHistory();track('download',{mode:'history',fmt:'png',cat:it.kt||''});
+  });
+  const v=await p;
+  if(v==='zip')histRegenZip(h);
+}
+function exportHistory(){
+  const rowsCsv=[['Waktu','Jenis','Isi / File','Label','Kategori','Jumlah QR','Dilewati','Level','Ukuran','Dibuka','Diunduh']];
+  history.forEach(h=>rowsCsv.push([new Date(h.t).toISOString(),h.type,h.type==='single'?h.content:h.file,h.label||'',h.type==='single'?(h.cat||''):Object.keys(h.cats||{}).join('; '),h.type==='single'?1:h.success,h.skippedN||0,h.level||(h.opts&&h.opts.ecl)||'',h.opts?h.opts.size:'',h.clicks||0,h.downloads||0]));
+  saveBlob(new Blob(['\uFEFF'+rowsCsv.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'riwayat-qr-'+stamp()+'.csv');
+}
+
+/* =========================================================
+   ANALYTICS
+   ========================================================= */
+let aRange=30;
+const EV_TEXT=e=>{switch(e.type){
+  case 'generate':return 'Menyimpan QR single'+(e.cat?' ('+e.cat+')':'');
+  case 'bulk_generate':return 'Generate bulk '+fmtN(e.n)+' QR';
+  case 'download':return 'Unduh '+String(e.fmt||'').toUpperCase()+(e.mode==='history'?' dari riwayat':'');
+  case 'zip_download':return 'Unduh ZIP'+(e.mode==='history'?' (buat ulang)':'')+(e.n?' — '+fmtN(e.n)+' QR':'');
+  case 'import':return 'Import file ('+fmtN(e.n)+' baris)';
+  case 'template_download':return 'Unduh template Excel';
+  case 'history_open':return 'Membuka riwayat '+(e.mode==='bulk'?'batch':'single');
+  case 'copy':return 'Salin QR';
+  case 'click':return 'Klik: '+e.label;
+  default:return e.type;}};
+function hbars(list,alt){
+  if(!list.length)return '<p class="hint">Belum ada data pada rentang ini.</p>';
+  const max=Math.max(...list.map(x=>x.v),1);
+  return list.map(x=>'<div class="hbar'+(alt?' alt':'')+'"><span class="lb" title="'+esc(x.l)+'">'+esc(x.l)+'</span><span class="tr"><i style="width:'+(x.v/max*100).toFixed(1)+'%"></i></span><span class="vl">'+fmtN(x.v)+'</span></div>').join('');
+}
+function barChart(labels,series,H,W){
+  H=H||200;W=W||720;const pl=34,pr=8,pt=10,pb=26;const n=labels.length;
+  const max=Math.max(1,...series.flatMap(s=>s.values));const nice=Math.ceil(max/4)*4||4;
+  const gw=(W-pl-pr)/n;const bw=Math.max(2,gw*0.72/series.length);
+  let g='';
+  for(let i=0;i<=4;i++){const y=pt+(H-pt-pb)*(1-i/4);g+='<line class="gl" x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'"/><text x="'+(pl-6)+'" y="'+(y+4)+'" text-anchor="end">'+fmtN(Math.round(nice*i/4))+'</text>';}
+  const step=Math.ceil(n/12);
+  labels.forEach((lb,i)=>{
+    const x0=pl+gw*i+(gw-bw*series.length)/2;
+    series.forEach((s,j)=>{const v=s.values[i];const h=(H-pt-pb)*(v/nice);g+='<rect class="'+s.cls+'" x="'+(x0+j*bw).toFixed(1)+'" y="'+(H-pb-h).toFixed(1)+'" width="'+(bw-1).toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="1.5"><title>'+esc(lb.full||lb.s)+': '+fmtN(v)+' '+s.name+'</title></rect>';});
+    if(i%step===0)g+='<text x="'+(pl+gw*i+gw/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(lb.s)+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Grafik">'+g+'</svg>';
+}
+function renderAnalytics(){
+  const now=Date.now();const start=aRange?new Date(new Date().setHours(0,0,0,0)).getTime()-(aRange-1)*864e5:0;
+  const ev=events.filter(e=>e.t>=start);
+  const qrN=e=>e.type==='generate'?1:e.type==='bulk_generate'?(e.n||0):0;
+  const totalQR=ev.reduce((a,e)=>a+qrN(e),0);
+  const dls=ev.filter(e=>e.type==='download'||e.type==='zip_download').length;
+  const clicks=ev.filter(e=>e.type==='click');
+  const days=new Set(ev.map(e=>dayKey(e.t))).size;
+  const opens=ev.filter(e=>e.type==='history_open').length;
+  $('#aKpis').innerHTML=[[totalQR,'QR dibuat'],[dls,'Unduhan'],[clicks.length,'Total klik'],[opens,'Riwayat dibuka'],[days,'Hari aktif']].map(k=>'<div class="kpi"><b>'+fmtN(k[0])+'</b><span>'+k[1]+'</span></div>').join('');
+
+  // daily
+  let dayCount=aRange||0;
+  if(!aRange){const first=events.length?events[0].t:now;dayCount=Math.min(180,Math.max(7,Math.ceil((now-new Date(first).setHours(0,0,0,0))/864e5)+1));}
+  const base=new Date();base.setHours(0,0,0,0);
+  const labels=[],qrs=[],cks=[];const idx={};
+  for(let i=dayCount-1;i>=0;i--){const d=new Date(base.getTime()-i*864e5);const k=dayKey(d);idx[k]=labels.length;
+    labels.push({s:d.getDate()+'/'+(d.getMonth()+1),full:d.toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'})});qrs.push(0);cks.push(0);}
+  ev.forEach(e=>{const i=idx[dayKey(e.t)];if(i==null)return;qrs[i]+=qrN(e);if(e.type==='click')cks[i]++;});
+  $('#aDaily').innerHTML=barChart(labels,[{name:'QR',values:qrs,cls:'b1'},{name:'klik',values:cks,cls:'b2'}]);
+
+  // clicks per button
+  const bc={};clicks.forEach(e=>{bc[e.label]=(bc[e.label]||0)+1;});
+  $('#aButtons').innerHTML=hbars(Object.entries(bc).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([l,v])=>({l,v})));
+
+  // top history
+  const top=history.filter(h=>h.clicks||h.downloads).sort((a,b)=>((b.clicks||0)*2+(b.downloads||0))-((a.clicks||0)*2+(a.downloads||0))).slice(0,8);
+  $('#aTopHist').innerHTML=top.length?'<ul class="log">'+top.map(h=>'<li><span class="'+(h.type==='single'&&!h.label?'mono':'')+'">'+esc(trunc(h.type==='single'?(h.label||h.content):h.file,48))+'</span><time>'+fmtN(h.clicks||0)+' dibuka, '+fmtN(h.downloads||0)+' unduhan</time></li>').join('')+'</ul>'
+    :'<p class="hint">Belum ada entri riwayat yang dibuka atau diunduh.</p>';
+
+  // categories
+  const cat={};ev.forEach(e=>{if(e.type==='generate'){const k=e.cat||'(tanpa kategori)';cat[k]=(cat[k]||0)+1;}if(e.type==='bulk_generate'&&e.cats)Object.entries(e.cats).forEach(([k,v])=>cat[k]=(cat[k]||0)+v);});
+  $('#aCats').innerHTML=hbars(Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v})),true);
+
+  // modes & formats
+  const single=ev.filter(e=>e.type==='generate').length,bulk=ev.filter(e=>e.type==='bulk_generate').reduce((a,e)=>a+(e.n||0),0);
+  const fm={};ev.forEach(e=>{if(e.type==='download')fm[String(e.fmt).toUpperCase()]=(fm[String(e.fmt).toUpperCase()]||0)+1;if(e.type==='zip_download')fm['ZIP']=(fm['ZIP']||0)+1;});
+  $('#aModes').innerHTML='<p class="hint" style="margin:0 0 4px">QR per mode</p>'+hbars([{l:'Single',v:single},{l:'Bulk',v:bulk}].filter(x=>x.v))+
+    '<p class="hint" style="margin:14px 0 4px">Unduhan per format</p>'+hbars(Object.entries(fm).map(([l,v])=>({l,v})),true);
+
+  // hours
+  const hrs=new Array(24).fill(0);ev.forEach(e=>hrs[new Date(e.t).getHours()]++);
+  $('#aHours').innerHTML=barChart(hrs.map((_,i)=>({s:i%3===0?pad(i):'',full:'Jam '+pad(i)+':00'})),[{name:'aktivitas',values:hrs,cls:'b1'}],200,420);
+
+  // log
+  const last=ev.slice(-20).reverse();
+  $('#aLog').innerHTML=last.length?last.map(e=>'<li><span>'+esc(EV_TEXT(e))+'</span><time>'+fmtTime(e.t)+'</time></li>').join(''):'<li class="hint">Belum ada aktivitas.</li>';
+}
+function exportEvents(){
+  const r=[['Waktu','Tipe','Deskripsi','Label_Tombol','Mode','Jumlah','Format','Kategori']];
+  events.forEach(e=>r.push([new Date(e.t).toISOString(),e.type,EV_TEXT(e),e.label||'',e.mode||'',e.n||'',e.fmt||'',e.cat||(e.cats?Object.keys(e.cats).join('; '):'')]));
+  saveBlob(new Blob(['\uFEFF'+r.map(x=>x.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'analitik-klik-'+stamp()+'.csv');
+}
+
+/* =========================================================
+   BINDINGS
+   ========================================================= */
+function bind(){
+  $$('[data-ic]').forEach(s=>{s.outerHTML=ic(s.dataset.ic);});
+  $$('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>applyTheme(b.dataset.themeSet)));
+  $$('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+
+  // single
+  Object.assign(S,{text:$('#sText'),label:$('#sLabel'),cat:$('#sCat'),size:$('#sSize'),ecl:$('#sEcl'),dark:$('#sDark'),light:$('#sLight'),margin:$('#sMargin'),showLabel:$('#sShowLabel')});
+  Object.values(S).forEach(el=>el.addEventListener('input',()=>{clearTimeout(singleTimer);singleTimer=setTimeout(renderSingle,120);}));
+  S.showLabel.addEventListener('change',renderSingle);
+  $('#sSave').addEventListener('click',()=>{if(saveSingle())toast('Tersimpan di riwayat');});
+  $('#sPng').addEventListener('click',()=>singleDownload('png'));
+  $('#sSvg').addEventListener('click',()=>singleDownload('svg'));
+  $('#sCopy').addEventListener('click',singleCopy);
+
+  // schema
+  const sb=$('#schemaBody');let oldHeader='';
+  sb.addEventListener('focusin',e=>{if(e.target.dataset.f==='header')oldHeader=e.target.value.trim();});
+  sb.addEventListener('input',e=>{
+    const tr=e.target.closest('tr');if(!tr)return;const c=schema.cols[+tr.dataset.i];const f=e.target.dataset.f;
+    if(f==='header'){c.header=e.target.value.trim();markCustom();persistSchema();checkSchema();}
+    else if(f==='example'){c.example=e.target.value;markCustom();persistSchema();renderPatternExample();}
+  });
+  sb.addEventListener('change',e=>{
+    const tr=e.target.closest('tr');if(!tr)return;const c=schema.cols[+tr.dataset.i];const f=e.target.dataset.f;
+    if(f==='header'){renamePlaceholders(oldHeader,c.header);schemaChanged({noRender:true});oldHeader=c.header;}
+    else if(f==='required'){c.required=e.target.checked;markCustom();schemaChanged({noRender:true});}
+  });
+  sb.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;const i=+b.closest('tr').dataset.i;
+    if(b.dataset.act==='up'&&i>0){[schema.cols[i-1],schema.cols[i]]=[schema.cols[i],schema.cols[i-1]];}
+    else if(b.dataset.act==='down'&&i<schema.cols.length-1){[schema.cols[i+1],schema.cols[i]]=[schema.cols[i],schema.cols[i+1]];}
+    else if(b.dataset.act==='del'){const c=schema.cols[i];schema.cols.splice(i,1);delete mapping[c.key];}
+    else return;
+    markCustom();schemaChanged();
+  });
+  const addCol=()=>{
+    const name=$('#newCol').value.trim().replace(/[{}]/g,'');
+    if(!name)return $('#newCol').focus();
+    if(schema.cols.some(c=>c.header.toLowerCase()===name.toLowerCase()))return toast('Kolom "'+name+'" sudah ada','err');
+    schema.cols.push(mk(name,'custom',false,''));$('#newCol').value='';markCustom();schemaChanged();
+    if(fileState){autoMap();renderMapping();}
+    toast('Kolom "'+name+'" ditambahkan');
+  };
+  $('#addCol').addEventListener('click',addCol);
+  $('#newCol').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCol();}});
+  $('#preset').addEventListener('change',async e=>{
+    const p=e.target.value;if(!PRESETS[p])return;
+    schema=PRESETS[p]();if(fileState)autoMap();schemaChanged();toast('Preset diterapkan');
+  });
+  $('#resetSchema').addEventListener('click',async()=>{
+    const ok=await modal({title:'Reset skema?',body:'<p>Skema kembali ke 6 kolom pakem standar: No, ID, Nama, Kategori, Data_QR, Catatan. Kolom kustom akan dihapus.</p>',buttons:[{label:'Batal',value:false},{label:'Reset skema',value:true,danger:true}]});
+    if(!ok)return;schema=PRESETS.standar();if(fileState)autoMap();schemaChanged();
+  });
+  $('#qrSource').addEventListener('change',e=>{schema.source=e.target.value;if(schema.source==='pattern'&&!schema.pattern)schema.pattern='{ID}|{Kategori}';$('#qrPattern').value=schema.pattern;markCustom();schemaChanged({noRender:true});});
+  ['qrPattern','fnPattern'].forEach(id=>{
+    const el=$('#'+id);
+    el.addEventListener('focus',()=>{lastPatternInput=el;});
+    el.addEventListener('input',()=>{if(id==='qrPattern')schema.pattern=el.value;else schema.fname=el.value;markCustom();persistSchema();checkSchema();});
+    el.addEventListener('change',()=>schemaChanged({noRender:true}));
+  });
+  $('#chips').addEventListener('click',e=>{
+    const b=e.target.closest('[data-ph]');if(!b)return;
+    const el=lastPatternInput&&!lastPatternInput.disabled?lastPatternInput:(schema.source==='pattern'?$('#qrPattern'):$('#fnPattern'));
+    const s=el.selectionStart!=null?el.selectionStart:el.value.length,en=el.selectionEnd!=null?el.selectionEnd:el.value.length;
+    el.value=el.value.slice(0,s)+b.dataset.ph+el.value.slice(en);el.focus();el.setSelectionRange(s+b.dataset.ph.length,s+b.dataset.ph.length);
+    el.dispatchEvent(new Event('input'));el.dispatchEvent(new Event('change'));
+  });
+  $('#dlTemplate').addEventListener('click',downloadTemplate);
+
+  // upload
+  const drop=$('#drop'),fin=$('#fileIn');
+  drop.addEventListener('click',()=>fin.click());
+  drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fin.click();}});
+  ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over');}));
+  ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over');}));
+  drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f){track('click',{label:'Bulk: Drop file'});readFile(f);}});
+  fin.addEventListener('change',()=>{readFile(fin.files[0]);fin.value='';});
+  $('#mapGrid').addEventListener('change',e=>{const s=e.target.closest('select[data-key]');if(!s)return;mapping[s.dataset.key]=+s.value;renderMapping();});
+  $('#applyMap').addEventListener('click',async()=>{
+    if(rows.length){const ok=await modal({title:'Terapkan pemetaan ulang?',body:'<p>Tabel preview akan dibangun ulang dari file. Suntingan yang sudah Anda buat di tabel akan hilang.</p>',buttons:[{label:'Batal',value:false},{label:'Terapkan ulang',value:true,primary:true}]});if(!ok)return;}
+    applyMapping();toast('Pemetaan diterapkan');
+  });
+  $('#extraCols').addEventListener('click',e=>{
+    if(!e.target.closest('#addExtra'))return;
+    const usedIdx=new Set(Object.values(mapping).filter(v=>v>=0));
+    fileState.headers.forEach((h,i)=>{if(h&&!usedIdx.has(i)&&!schema.cols.some(c=>c.header.toLowerCase()===h.toLowerCase())){const c=mk(h.replace(/[{}]/g,''),'custom',false,'');schema.cols.push(c);mapping[c.key]=i;}});
+    markCustom();persistSchema();renderSchema();renderMapping();
+    if(rows.length){fileState.body.forEach((b,bi)=>{const r=rows.find(x=>x.n===b.row);if(!r)return;schema.cols.forEach(c=>{if(!(c.key in r.v)){const idx=mapping[c.key];r.v[c.key]=idx>=0?String(b.arr[idx]==null?'':b.arr[idx]).trim():'';}});});validateAll();renderPreview();}
+    toast('Kolom file ditambahkan ke skema');
   });
 
-  generate();
+  // preview
+  $$('.fchip').forEach(b=>b.addEventListener('click',()=>{pv.filter=b.dataset.filter;pv.page=0;$$('.fchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderPreview();}));
+  let st=null;$('#pvSearch').addEventListener('input',e=>{clearTimeout(st);st=setTimeout(()=>{pv.q=e.target.value.trim();pv.page=0;renderPreview();},180);});
+  $('#pgPrev').addEventListener('click',()=>{pv.page--;renderPreview();});
+  $('#pgNext').addEventListener('click',()=>{pv.page++;renderPreview();});
+  const tb=$('#pvTable tbody');
+  tb.addEventListener('focusout',e=>{
+    const td=e.target.closest('td[data-k]');if(!td)return;
+    const r=rows[+td.closest('tr').dataset.i];if(!r)return;
+    let v=td.innerText.replace(/\u00a0/g,' ').replace(/[\r\n]+/g,' ').trim();
+    if(td.dataset.k!==roleKey('data'))v=v.replace(/[ \t]{2,}/g,' ');
+    if(v!==(r.v[td.dataset.k]||'')){r.v[td.dataset.k]=v;td.textContent=v;validateAll();updateVisible();resetResult();track('click',{label:'Preview: Edit sel'});}
+    else td.textContent=v;
+  });
+  tb.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('td[data-k]')){e.preventDefault();e.target.blur();}if(e.key==='Escape'&&e.target.matches('td[data-k]')){const r=rows[+e.target.closest('tr').dataset.i];e.target.textContent=r.v[e.target.dataset.k]||'';e.target.blur();}});
+  tb.addEventListener('paste',e=>{if(!e.target.closest('td[data-k]'))return;e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text').replace(/[\r\n]+/g,' ');document.execCommand('insertText',false,t);});
+  tb.addEventListener('click',e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;const r=rows[+b.closest('tr').dataset.i];if(!r)return;
+    if(b.dataset.act==='lallow')r.link='allow';else if(b.dataset.act==='lskip')r.link='skip';
+    else if(b.dataset.act==='del'){rows.splice(r._i,1);validateAll();renderPreview();resetResult();return;}
+    validateAll();updateVisible();
+  });
+  $('#linkBar').addEventListener('click',e=>{const b=e.target.closest('[data-linkall]');if(!b)return;rows.forEach(r=>{if(r.link==='pending')r.link=b.dataset.linkall;});validateAll();renderPreview();});
+  $('#addRow').addEventListener('click',()=>{
+    const n=rows.reduce((m,r)=>Math.max(m,r.n),1)+1;const v={};schema.cols.forEach(c=>v[c.key]='');
+    rows.push({n,v,link:null});validateAll();pv.filter='all';pv.q='';$('#pvSearch').value='';
+    $$('.fchip').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.filter==='all')));
+    pv.page=Math.floor((rows.length-1)/pv.size);renderPreview();updateSteps();
+    const last=$('#pvTable tbody tr:last-child td[data-k]');if(last){last.focus();}
+  });
+
+  // generate
+  ['bEcl'].forEach(id=>$('#'+id).addEventListener('change',()=>{if(rows.length){validateAll();renderPreview();}}));
+  ['bSize','bEcl','bLabel','bFormat','bMargin','bDark','bLight'].forEach(id=>$('#'+id).addEventListener('change',()=>{if(lastZip)resetResult();store.set('bulkOpts',bulkOpts());}));
+  $('#genAll').addEventListener('click',generateAll);
+  $('#cancelRun').addEventListener('click',()=>{cancelReq=true;$('#progText').textContent='Membatalkan…';});
+  $('#dlZip').addEventListener('click',()=>{if(lastZip){saveBlob(lastZip.blob,lastZip.name);track('zip_download',{mode:'bulk'});const h=history.find(x=>x.zipName===lastZip.name);if(h){h.downloads=(h.downloads||0)+1;saveHistory();}}});
+  $$('#steps [data-goto]').forEach(b=>b.addEventListener('click',()=>$('#'+b.dataset.goto).scrollIntoView({behavior:'smooth',block:'start'})));
+
+  // history
+  let ht=null;$('#hSearch').addEventListener('input',e=>{clearTimeout(ht);ht=setTimeout(()=>{hv.q=e.target.value.trim();renderHistory();},160);});
+  $('#hType').addEventListener('change',e=>{hv.type=e.target.value;renderHistory();});
+  $('#hSort').addEventListener('change',e=>{hv.sort=e.target.value;renderHistory();});
+  $('#hExport').addEventListener('click',()=>{if(!history.length)return toast('Riwayat masih kosong');exportHistory();});
+  $('#hClear').addEventListener('click',async()=>{
+    if(!history.length)return;
+    const ok=await modal({title:'Hapus semua riwayat?',body:'<p>'+fmtN(history.length)+' entri akan dihapus dari browser ini. Data analitik tidak ikut terhapus.</p>',buttons:[{label:'Batal',value:false},{label:'Hapus semua',value:true,danger:true}]});
+    if(!ok)return;history=[];saveHistory();updateBadges();renderHistory();singleSavedId=null;renderSingle();
+  });
+  $('#hList').addEventListener('click',async e=>{
+    const b=e.target.closest('[data-act]');if(!b)return;
+    const h=history.find(x=>x.id===b.closest('.h-item').dataset.id);if(!h)return;
+    const a=b.dataset.act;
+    if(a==='open'){h.clicks=(h.clicks||0)+1;h.lastOpen=Date.now();saveHistory();track('history_open',{mode:h.type,ref:h.id});
+      if(h.type==='single')loadSingle(h);else{renderHistory();openBulkDetail(h);}}
+    else if(a==='png'||a==='svg')histDownloadSingle(h,a);
+    else if(a==='zip')histRegenZip(h);
+    else if(a==='del'){history=history.filter(x=>x!==h);saveHistory();updateBadges();renderHistory();if(singleSavedId===h.id){singleSavedId=null;renderSingle();}}
+  });
+
+  // analytics
+  $$('#aRange button').forEach(b=>b.addEventListener('click',()=>{aRange=+b.dataset.range;$$('#aRange button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderAnalytics();}));
+  $('#aExport').addEventListener('click',()=>{if(!events.length)return toast('Belum ada data analitik');exportEvents();});
+  $('#aReset').addEventListener('click',async()=>{
+    const ok=await modal({title:'Reset analitik?',body:'<p>Semua catatan klik dan aktivitas ('+fmtN(events.length)+' kejadian) akan dihapus. Riwayat QR tetap tersimpan.</p>',buttons:[{label:'Batal',value:false},{label:'Reset analitik',value:true,danger:true}]});
+    if(!ok)return;events=[];store.set('events',events);history.forEach(h=>{h.clicks=0;});saveHistory();renderAnalytics();
+  });
+}
+
+/* ---------------- Init ---------------- */
+async function init(){
+  const missing=await ensureLibs();
+  if(missing.length){const el=$('#libError');el.hidden=false;el.textContent='Library gagal dimuat: '+missing.join(', ')+'. Periksa koneksi internet lalu muat ulang halaman.';}
+  if(window.qrcode&&qrcode.stringToBytesFuncs&&qrcode.stringToBytesFuncs['UTF-8'])qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];
+  applyTheme(store.get('theme','auto'));
+  bind();
+  const bo=store.get('bulkOpts',null);
+  if(bo){[['bSize','size'],['bEcl','ecl'],['bLabel','labelMode'],['bFormat','format'],['bMargin','margin'],['bDark','dark'],['bLight','light']].forEach(([id,k])=>{if(bo[k]!=null)$('#'+id).value=bo[k];});}
+  renderSchema();updateBadges();updateSteps();
+  if(window.qrcode)renderSingle();
+  showTab(store.get('tab','single'));
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(window.qrcode)renderSingle();});
+}
+init();
+})();
 </script>
 </body>
 </html>
