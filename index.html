@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Generator QR Code</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --text:#1a1a1a; --muted:#6b7280;
+    --accent:#2563eb; --border:#e5e7eb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1115; --card:#1a1d24; --text:#f1f1f1; --muted:#9ca3af;
+      --accent:#3b82f6; --border:#2a2e37;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1115; --card:#1a1d24; --text:#f1f1f1; --muted:#9ca3af;
+    --accent:#3b82f6; --border:#2a2e37;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0; min-height:100%;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));
+    display:flex; justify-content:center;
+  }
+  .wrap{width:100%; max-width:420px;}
+  h1{font-size:20px; margin:0 0 4px;}
+  p.sub{color:var(--muted); margin:0 0 20px; font-size:14px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:20px; margin-bottom:16px;
+  }
+  label{font-size:13px; color:var(--muted); display:block; margin-bottom:6px;}
+  input[type=text]{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-size:15px; margin-bottom:14px;
+  }
+  input[type=color]{width:44px;height:32px;border:none;background:none;padding:0;vertical-align:middle;}
+  .row{display:flex; gap:12px; align-items:center; margin-bottom:14px;}
+  .row label{margin-bottom:0; flex:1;}
+  select{
+    padding:8px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text);
+  }
+  button{
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background:var(--accent); color:#fff; font-size:15px; font-weight:600;
+    cursor:pointer;
+  }
+  button.secondary{
+    background:transparent; color:var(--accent); border:1px solid var(--accent);
+    margin-top:8px;
+  }
+  #qrbox{
+    display:flex; justify-content:center; align-items:center;
+    background:#fff; border-radius:12px; padding:16px; min-height:240px;
+  }
+  #qrbox img, #qrbox canvas{max-width:100%; height:auto;}
+  .hint{font-size:12px;color:var(--muted); text-align:center; margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Generator QR Code</h1>
+  <p class="sub">Dibuat sendiri, langsung di browser — tanpa layanan pihak ketiga.</p>
+
+  <div class="card">
+    <label for="text">Teks / URL</label>
+    <input type="text" id="text" value="https://skala.stekom.ac.id">
+
+    <div class="row">
+      <label>Ukuran
+        <select id="size">
+          <option value="200">200 px</option>
+          <option value="300" selected>300 px</option>
+          <option value="400">400 px</option>
+          <option value="600">600 px</option>
+        </select>
+      </label>
+      <label>Warna
+        <input type="color" id="color" value="#000000">
+      </label>
+    </div>
+
+    <button id="genBtn">Buat QR Code</button>
+  </div>
+
+  <div class="card">
+    <div id="qrbox"></div>
+    <button class="secondary" id="downloadBtn">Unduh PNG</button>
+    <p class="hint">Klik "Buat QR Code" setiap kali mengubah teks, ukuran, atau warna.</p>
+  </div>
+</div>
+
+<script>
+  const qrbox = document.getElementById('qrbox');
+  let qr = null;
+
+  function generate(){
+    const text = document.getElementById('text').value.trim() || 'https://skala.stekom.ac.id';
+    const size = parseInt(document.getElementById('size').value, 10);
+    const color = document.getElementById('color').value;
+
+    qrbox.innerHTML = '';
+    try{
+      qr = new QRCode(qrbox, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: color,
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }catch(e){
+      qrbox.innerHTML = '<p style="color:#dc2626;font-size:13px;">Gagal membuat QR: ' + e.message + '</p>';
+    }
+  }
+
+  document.getElementById('genBtn').addEventListener('click', generate);
+
+  document.getElementById('downloadBtn').addEventListener('click', function(){
+    const img = qrbox.querySelector('img');
+    const canvas = qrbox.querySelector('canvas');
+    let dataUrl = null;
+    if(img && img.src){ dataUrl = img.src; }
+    else if(canvas){ dataUrl = canvas.toDataURL('image/png'); }
+    if(!dataUrl){ generate(); return; }
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'qrcode-skala-stekom.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  generate();
+</script>
+</body>
+</html>
